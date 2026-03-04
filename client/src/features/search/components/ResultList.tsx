@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { ResultCard, ResultHeader, ResultTitle, ResultSnippet, ResultFooter } from './ResultCard';
+import { ResultCard, ResultHeader, ResultTitle, ResultSnippet, ResultFooter, ResultMedia } from './ResultCard';
 
 interface SearchResult {
     id: string;
@@ -41,6 +41,7 @@ export default function ResultList({ results, query }: { results: SearchResult[]
                         <ResultHeader site={result.displayUrl} />
                         <ResultTitle url={result.url}>{result.title}</ResultTitle>
                         <ResultSnippet terms={[query]}>{result.snippet}</ResultSnippet>
+                        <ResultMedia images={result.images} videos={result.videos} />
                         <ResultFooter tags={result.tags} />
                     </ResultCard>
                 </motion.div>

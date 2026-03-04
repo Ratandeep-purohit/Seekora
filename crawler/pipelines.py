@@ -4,6 +4,7 @@ from urllib.parse import quote_plus
 import logging
 import datetime
 from email.utils import parsedate_to_datetime
+from concurrent.futures import ThreadPoolExecutor
 
 logger = logging.getLogger(__name__)
 
@@ -20,15 +21,29 @@ class NewsPipeline:
             response = requests.get(rss_url, timeout=5)
             
             if response.status_code == 200:
-                soup = BeautifulSoup(response.content, features='xml')
-                items = soup.find_all('item')
+                # Use lxml if available, otherwise fallback
+                try:
+                    soup = BeautifulSoup(response.content, features='xml')
+                except:
+                    soup = BeautifulSoup(response.content, 'html.parser')
+                    
+                items = soup.find_all(['item', 'ITEM'])
                 
-                for item in items[:15]:
-                    title = item.title.text if item.title else "No Title"
-                    link = item.link.text if item.link else ""
-                    pub_date = item.pubDate.text if item.pubDate else ""
-                    source = item.source.text if item.source else "Google News"
-                    description = item.description.text if item.description else ""
+                for item in items[:20]: # Increased to 20
+                    title = item.find(['title', 'TITLE'])
+                    title = title.text if title else "No Title"
+                    
+                    link = item.find(['link', 'LINK'])
+                    link = link.text if link else ""
+                    
+                    pub_date = item.find(['pubDate', 'pubdate', 'PUBDATE'])
+                    pub_date = pub_date.text if pub_date else ""
+                    
+                    source = item.find(['source', 'SOURCE'])
+                    source = source.text if source else "Google News"
+                    
+                    description = item.find(['description', 'DESCRIPTION'])
+                    description = description.text if description else ""
                     
                     # Parse Description for Image and Snippet
                     soup_desc = BeautifulSoup(description, 'html.parser')
@@ -38,7 +53,6 @@ class NewsPipeline:
                     thumb_url = img_tag['src'] if img_tag else None
                     
                     # Clean Text
-                    # Google News often has "Source - ..." at start, we want the body
                     clean_desc = soup_desc.get_text()
                     
                     # Simple relative time calculation
@@ -88,7 +102,6 @@ class VideoPipeline:
         
         try:
             # 1. Primary: DuckDuckGo HTML Video Search
-            # We search specifically for the query + "youtube" to get video links
             search_url = f"https://html.duckduckgo.com/html/?q={quote_plus(query + ' site:youtube.com')}"
             response = requests.get(search_url, headers=headers, timeout=5)
             
@@ -100,10 +113,8 @@ class VideoPipeline:
                     title = link.get_text()
                     
                     if 'youtube.com/watch' in href:
-                         # Extract fake thumbnail (standard YT format)
                         try:
                             video_id = href.split('v=')[-1].split('&')[0]
-                            # Using high-quality thumbnail
                             thumb_url = f"https://i.ytimg.com/vi/{video_id}/mqdefault.jpg"
                             
                             videos.append({
@@ -120,23 +131,16 @@ class VideoPipeline:
         except Exception as e:
             logger.error(f"DDG Video Error: {e}")
 
-        # 2. Fallback: Direct YouTube Search (if DDG returned nothing)
+        # 2. Fallback: Direct YouTube Search
         if len(videos) == 0:
             try:
-                # Scrape YouTube Results Page directly (risky but effective as fallback)
-                # We use a trick: searching via a piped instance or similar might be easier, 
-                # but standard HTML scrape often works for first few results.
-                # Actually, simple string matching on the raw response is often more robust than soup for YT due to hydration.
-                
                 yt_url = f"https://www.youtube.com/results?search_query={quote_plus(query)}"
                 response = requests.get(yt_url, headers=headers, timeout=5)
                 
                 if response.status_code == 200:
                     import re
-                    # Find video IDs in the raw HTML script data
                     video_ids = re.findall(r"\"videoId\":\"([a-zA-Z0-9_-]{11})\"", response.text)
                     
-                    # Deduplicate while preserving order
                     seen = set()
                     unique_ids = []
                     for vid in video_ids:
@@ -146,7 +150,7 @@ class VideoPipeline:
                     
                     for vid in unique_ids:
                         videos.append({
-                            'title': f"{query} - Video", # Fallback title
+                            'title': f"{query} - Video",
                             'url': f"https://www.youtube.com/watch?v={vid}",
                             'thumbnail': f"https://i.ytimg.com/vi/{vid}/mqdefault.jpg",
                             'provider': 'YouTube',
@@ -158,4 +162,175 @@ class VideoPipeline:
                 logger.error(f"YouTube Direct Error: {e}")
             
         logger.info(f"🎥 Found {len(videos)} videos")
-        return videos[:50]  # Increased limit to 50+ as requested
+        return videos[:50]
+
+class ImagePipeline:
+    """
+    Vertical Image Search Engine
+    Uses Google Custom Search API with PAGINATION for maximum results
+    Makes multiple API calls (start=1, start=11, start=21) to get 30 images
+    Post-processes to remove irrelevant images (logos, icons) and re-ranks by query relevance
+    """
+    
+    # Junk title patterns - images with these in their title are usually logos/icons
+    JUNK_PATTERNS = [
+        'logo', 'icon', 'favicon', 'banner', 'advertisement', 'ad banner',
+        'placeholder', 'spacer', 'loading', 'spinner', 'arrow', 'button',
+        'avatar default', 'thumbnail placeholder', 'stock photo watermark',
+    ]
+    
+    def search(self, query):
+        from django.conf import settings
+        all_images = []
+        
+        api_key = getattr(settings, 'GOOGLE_API_KEY', None)
+        cx = getattr(settings, 'GOOGLE_CX', None)
+        
+        if not api_key or not cx:
+            logger.warning("Google API Key or CX not configured for Image Search.")
+            return self._fallback_search(query)
+
+        query_words = set(query.lower().split())
+
+        def fetch_page(start):
+            try:
+                search_url = "https://www.googleapis.com/customsearch/v1"
+                params = {
+                    'key': api_key,
+                    'cx': cx,
+                    'q': query,
+                    'searchType': 'image',
+                    'num': 10,
+                    'start': start,
+                    'imgType': 'photo',    # CRITICAL: excludes logos, clipart, icons
+                    'imgSize': 'medium',   # medium = good quality but more results than 'large'
+                    'safe': 'active',
+                }
+                
+                response = requests.get(search_url, params=params, timeout=8)
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    page_images = []
+                    if 'items' in data:
+                        for item in data['items']:
+                            title = item.get('title', '')
+                            url = item['link']
+                            
+                            # FILTER 1: Skip URLs that are clearly not actual photos
+                            url_lower = url.lower()
+                            if any(skip in url_lower for skip in ['/logo', '/icon', '/favicon', '/sprite', '/widget', '/badge']):
+                                continue
+                            
+                            # FILTER 2: Skip images with junk-like titles
+                            title_lower = title.lower()
+                            if any(junk in title_lower for junk in self.JUNK_PATTERNS):
+                                # But don't skip if the query itself is about logos
+                                if 'logo' not in query.lower():
+                                    continue
+                            
+                            # FILTER 3: Skip very small images (likely icons)
+                            width = item.get('image', {}).get('width', 0)
+                            height = item.get('image', {}).get('height', 0)
+                            if width > 0 and height > 0 and (width < 100 or height < 100):
+                                continue
+                            
+                            # Calculate relevance score based on how many query words appear in title
+                            relevance = 0
+                            for word in query_words:
+                                if word in title_lower:
+                                    relevance += 1
+                            # Bonus for exact phrase match
+                            if query.lower() in title_lower:
+                                relevance += 5
+                            
+                            page_images.append({
+                                'url': url,
+                                'thumbnail': item.get('image', {}).get('thumbnailLink'),
+                                'title': title,
+                                'context': item.get('image', {}).get('contextLink', ''),
+                                'width': width,
+                                'height': height,
+                                'type': 'image',
+                                'source': 'google',
+                                '_relevance': relevance,
+                            })
+                    return page_images
+                else:
+                    logger.error(f"Google Image API Error (start={start}): {response.status_code} - {response.text[:200]}")
+                    return []
+            except Exception as e:
+                logger.error(f"Image Pipeline page {start} failed: {e}")
+                return []
+
+        # Parallel fetch 5 pages (start=1, 11, 21, 31, 41) = up to 50 images
+        with ThreadPoolExecutor(max_workers=5) as executor:
+            futures = [
+                executor.submit(fetch_page, 1),
+                executor.submit(fetch_page, 11),
+                executor.submit(fetch_page, 21),
+                executor.submit(fetch_page, 31),
+                executor.submit(fetch_page, 41),
+            ]
+            for future in futures:
+                try:
+                    page_results = future.result(timeout=10)
+                    all_images.extend(page_results)
+                except Exception as e:
+                    logger.error(f"Image page future failed: {e}")
+
+        # Deduplicate
+        seen = set()
+        unique_images = []
+        for img in all_images:
+            if img['url'] not in seen:
+                seen.add(img['url'])
+                unique_images.append(img)
+
+        # RE-RANK: Sort by relevance (most relevant titles first)
+        unique_images.sort(key=lambda x: x.get('_relevance', 0), reverse=True)
+        
+        # Remove internal _relevance field before returning
+        for img in unique_images:
+            img.pop('_relevance', None)
+
+        logger.info(f"🖼️ Google Image API found {len(unique_images)} total unique items (after filtering)")
+        
+        # If Google returned very few, add fallback
+        if len(unique_images) < 10:
+            fallback = self._fallback_search(query)
+            for fb in fallback:
+                if fb['url'] not in seen:
+                    unique_images.append(fb)
+                    seen.add(fb['url'])
+        
+        return unique_images
+
+    def _fallback_search(self, query):
+        """Fallback: Search DuckDuckGo for images"""
+        images = []
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        }
+        try:
+            search_url = f"https://html.duckduckgo.com/html/?q={quote_plus(query + ' images')}"
+            response = requests.get(search_url, headers=headers, timeout=5)
+            
+            if response.status_code == 200:
+                soup = BeautifulSoup(response.text, 'html.parser')
+                for link in soup.find_all('a', class_='result__a', href=True):
+                    href = link['href']
+                    title = link.get_text()
+                    if any(ext in href.lower() for ext in ['.jpg', '.jpeg', '.png', '.webp', '.gif']):
+                        images.append({
+                            'url': href,
+                            'thumbnail': href,
+                            'title': title,
+                            'context': '',
+                            'type': 'image',
+                            'source': 'duckduckgo'
+                        })
+        except Exception as e:
+            logger.error(f"DDG Image fallback failed: {e}")
+        
+        return images[:20]

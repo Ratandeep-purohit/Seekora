@@ -1,23 +1,28 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, Mic, Camera, Command, Sparkles, TrendingUp, Clock } from 'lucide-react';
+import { Search, Mic, Camera, X, Clock, TrendingUp, Sparkles, ExternalLink } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useSearchStore } from '../stores/searchStore';
-import { VoiceOverlay } from '../../intelligence/components/VoiceOverlay';
 
-const SUGGESTIONS = [
-    "Quantum Computing breakthroughs 2025",
-    "Best ramen in Tokyo",
-    "Stock market live analysis",
-    "React 19 new features"
+const TRENDING = [
+    "Artificial General Intelligence",
+    "Quantum Computing Startups",
+    "Web3 Security Protocols",
+    "Next.js vs Vite 2025",
+    "Fusion Power Breakthroughs",
+    "Neuralink Human Trials",
 ];
 
 export default function HomePage() {
     const navigate = useNavigate();
-    const { query, setQuery, isTyping, setTyping, suggestions, setSuggestions } = useSearchStore();
-    const [localQuery, setLocalQuery] = useState(query);
-    const [isVoiceOpen, setIsVoiceOpen] = useState(false);
+    const { setQuery, suggestions, setSuggestions, searchHistory, addToHistory } = useSearchStore();
+    const [localQuery, setLocalQuery] = useState('');
+    const [showSuggestions, setShowSuggestions] = useState(false);
+    const [selectedIndex, setSelectedIndex] = useState(-1);
+    const inputRef = useRef<HTMLInputElement>(null);
+    const suggestionsRef = useRef<HTMLDivElement>(null);
 
+    // Autocomplete from backend
     useEffect(() => {
         if (!localQuery.trim() || localQuery.length < 2) {
             setSuggestions([]);
@@ -34,160 +39,267 @@ export default function HomePage() {
             } catch (e) {
                 console.error('Autocomplete failed', e);
             }
-        }, 300);
+        }, 200);
 
         return () => clearTimeout(timer);
     }, [localQuery, setSuggestions]);
 
-    const handleSearch = (e: React.FormEvent) => {
-        e.preventDefault();
-        const finalQuery = localQuery.trim();
+    const handleSearch = (searchQuery?: string) => {
+        const finalQuery = (searchQuery || localQuery).trim();
         if (!finalQuery) return;
         setQuery(finalQuery);
+        addToHistory(finalQuery);
+        setShowSuggestions(false);
         navigate(`/search?q=${encodeURIComponent(finalQuery)}`);
     };
 
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (selectedIndex >= 0) {
+            const allSuggestions = getSuggestionList();
+            if (allSuggestions[selectedIndex]) {
+                handleSearch(allSuggestions[selectedIndex]);
+                return;
+            }
+        }
+        handleSearch();
+    };
+
+    const getSuggestionList = (): string[] => {
+        if (localQuery.trim()) {
+            return suggestions.length > 0 ? suggestions.slice(0, 10) : [];
+        }
+        // Show history + trending when focused but empty
+        const historyItems = searchHistory.slice(0, 4);
+        return historyItems;
+    };
+
+    const handleKeyDown = (e: React.KeyboardEvent) => {
+        const list = getSuggestionList();
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            setSelectedIndex(prev => Math.min(prev + 1, list.length - 1));
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            setSelectedIndex(prev => Math.max(prev - 1, -1));
+        } else if (e.key === 'Escape') {
+            setShowSuggestions(false);
+            setSelectedIndex(-1);
+        }
+    };
+
+    // Close suggestions on click outside
+    useEffect(() => {
+        const handleClickOutside = (e: MouseEvent) => {
+            if (suggestionsRef.current && !suggestionsRef.current.contains(e.target as Node)) {
+                setShowSuggestions(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    const suggestionList = getSuggestionList();
+
     return (
-        <div className="min-h-screen bg-[#0f172a] flex flex-col items-center justify-center relative overflow-hidden">
-            {/* Background Gradient Mesh */}
-            <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0 pointer-events-none opacity-40">
-                <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-purple-600 rounded-full blur-[120px] mix-blend-screen animate-pulse" />
-                <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-blue-600 rounded-full blur-[120px] mix-blend-screen animate-pulse" style={{ animationDelay: '2s' }} />
-            </div>
+        <div className="min-h-screen relative flex flex-col text-slate-200 overflow-hidden font-sans">
+            {/* Background elements */}
+            <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-indigo-600/20 blur-[120px] rounded-full pointer-events-none" />
+            <div className="absolute bottom-[-10%] right-[-10%] w-[30%] h-[30%] bg-purple-600/20 blur-[100px] rounded-full pointer-events-none" />
 
-            <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8 }}
-                className="z-10 w-full max-w-2xl px-4 flex flex-col items-center gap-8"
-            >
-                {/* Logo */}
-                <div className="text-center group cursor-default">
-                    <h1 className="text-7xl font-bold tracking-tighter bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent drop-shadow-lg">
-                        Seekora
-                    </h1>
-                    <div className="flex items-center gap-2 justify-center mt-2 text-slate-400 text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                        <Sparkles className="w-3 h-3 text-yellow-400" />
-                        <span>Intelligence First</span>
-                    </div>
+            {/* Top Navigation */}
+            <header className="flex items-center justify-between px-6 py-4 z-10 relative">
+                <div className="flex items-center gap-2">
+                    <Sparkles className="w-5 h-5 text-indigo-400" />
+                    <span className="font-display font-semibold text-lg tracking-wide text-white">Seekora</span>
                 </div>
+                <div className="flex items-center gap-6 text-sm font-medium">
+                    <a href="#" className="text-slate-400 hover:text-white transition-colors">Workspace</a>
+                    <a href="#" className="text-slate-400 hover:text-white transition-colors">Images</a>
+                    <button className="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center text-white shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/50 transition-all border border-indigo-400/30 font-semibold">
+                        S
+                    </button>
+                </div>
+            </header>
 
-                {/* Omnibox Container */}
-                <div className="w-full relative group">
-                    <form onSubmit={handleSearch} className="relative z-20">
-                        <div className={`
-              absolute inset-0 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-2xl blur-xl transition-opacity duration-500
-              ${isTyping ? 'opacity-100' : 'opacity-0 group-hover:opacity-50'}
-            `} />
+            {/* Main Content */}
+            <main className="flex-1 flex flex-col items-center justify-center px-4 w-full max-w-4xl mx-auto z-10 relative -mt-16">
 
+                {/* Modern Identity / Logo area */}
+                <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.8, ease: "easeOut" }}
+                    className="mb-10 text-center"
+                >
+                    <div className="inline-block px-4 py-1.5 rounded-full border border-indigo-500/30 bg-indigo-500/10 text-indigo-300 text-xs font-medium tracking-wider mb-6 backdrop-blur-md">
+                        NEXT-GEN SEARCH ENGINE
+                    </div>
+                    <h1 className="text-6xl md:text-8xl font-display font-bold tracking-tight text-white mb-4">
+                        <span className="text-gradient">Seek</span>ora
+                    </h1>
+                    <p className="text-slate-400 text-lg md:text-xl font-light max-w-lg mx-auto">
+                        Intelligent answers, deep insights, and instant discovery across the entire web.
+                    </p>
+                </motion.div>
+
+                {/* Omni-search Box */}
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.6, delay: 0.2 }}
+                    className="w-full relative"
+                    ref={suggestionsRef}
+                >
+                    <form onSubmit={handleSubmit} className="relative z-20">
                         <div className={`
-              w-full h-16 bg-slate-900/80 backdrop-blur-xl border border-slate-700/50 rounded-2xl flex items-center px-6 shadow-2xl transition-all duration-300
-              ${isTyping ? 'ring-2 ring-blue-500/50 scale-[1.02]' : 'hover:border-slate-600'}
-            `}>
-                            <Search className={`w-6 h-6 mr-4 transition-colors ${isTyping ? 'text-blue-400' : 'text-slate-500'}`} />
+                            glass-panel rounded-2xl flex items-center h-16 px-6 relative transition-all duration-300 input-glow
+                            ${showSuggestions && suggestionList.length > 0 ? 'rounded-b-none border-b-transparent' : ''}
+                        `}>
+                            <Search className="w-6 h-6 text-indigo-400/80 mr-4" />
 
                             <input
+                                ref={inputRef}
                                 type="text"
                                 value={localQuery}
                                 onChange={(e) => {
                                     setLocalQuery(e.target.value);
-                                    setTyping(true);
+                                    setSelectedIndex(-1);
                                 }}
-                                onBlur={() => setTyping(false)}
-                                placeholder="Ask anything..."
-                                className="flex-1 bg-transparent text-lg text-white placeholder-slate-500 outline-none font-medium"
+                                onFocus={() => setShowSuggestions(true)}
+                                onKeyDown={handleKeyDown}
+                                className="flex-1 bg-transparent text-xl text-white outline-none placeholder:text-slate-500 font-light"
+                                placeholder="What are you looking for..."
+                                autoComplete="off"
                                 autoFocus
                             />
 
-                            <div className="flex items-center gap-3 pl-4 border-l border-slate-700/50">
+                            {localQuery && (
                                 <button
                                     type="button"
-                                    onClick={() => setIsVoiceOpen(true)}
-                                    className="p-2 hover:bg-slate-800 rounded-lg transition-colors text-slate-400 hover:text-white group/mic"
+                                    onClick={() => {
+                                        setLocalQuery('');
+                                        inputRef.current?.focus();
+                                    }}
+                                    className="p-1 hover:bg-white/10 rounded-full mr-2 transition-colors"
                                 >
-                                    <Mic className="w-5 h-5 group-hover/mic:scale-110 transition-transform" />
+                                    <X className="w-5 h-5 text-slate-400" />
                                 </button>
-                                <button type="button" className="p-2 hover:bg-slate-800 rounded-lg transition-colors text-slate-400 hover:text-white group/cam">
-                                    <Camera className="w-5 h-5 group-hover/cam:scale-110 transition-transform" />
+                            )}
+
+                            <div className="h-6 w-px bg-white/10 mx-2"></div>
+
+                            <div className="flex items-center gap-1">
+                                <button type="button" className="p-2.5 hover:bg-white/10 rounded-xl transition-colors text-slate-400 hover:text-indigo-400 focus:outline-none">
+                                    <Mic className="w-5 h-5" />
+                                </button>
+                                <button type="button" className="p-2.5 hover:bg-white/10 rounded-xl transition-colors text-slate-400 hover:text-indigo-400 focus:outline-none">
+                                    <Camera className="w-5 h-5" />
                                 </button>
                             </div>
                         </div>
+
+                        {/* Dropdown Suggestions */}
+                        <AnimatePresence>
+                            {showSuggestions && suggestionList.length > 0 && (
+                                <motion.div
+                                    initial={{ opacity: 0, y: -10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: -10 }}
+                                    transition={{ duration: 0.2 }}
+                                    className="absolute left-0 right-0 top-full glass-panel border-t-0 rounded-b-2xl shadow-2xl shadow-black/50 overflow-hidden"
+                                >
+                                    <div className="h-px w-[calc(100%-3rem)] mx-auto bg-white/10" />
+                                    <ul className="py-3">
+                                        {suggestionList.map((item, i) => (
+                                            <li key={i}>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleSearch(item)}
+                                                    onMouseEnter={() => setSelectedIndex(i)}
+                                                    className={`w-full text-left px-6 py-3 flex items-center gap-4 text-[16px] transition-colors focus:outline-none
+                                                        ${selectedIndex === i ? 'bg-white/10 text-white' : 'hover:bg-white/5 text-slate-300'}`}
+                                                >
+                                                    {localQuery ? (
+                                                        <Search className={`w-4 h-4 ${selectedIndex === i ? 'text-indigo-400' : 'text-slate-500'}`} />
+                                                    ) : (
+                                                        <Clock className="w-4 h-4 text-slate-500" />
+                                                    )}
+                                                    <span className="font-light tracking-wide flex-1">{item}</span>
+                                                    {!localQuery && selectedIndex === i && (
+                                                        <span className="text-xs text-indigo-400 font-medium tracking-wider">SELECT</span>
+                                                    )}
+                                                </button>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
                     </form>
 
-                    {/* Suggestions (Dynamic or Trending) */}
-                    <AnimatePresence>
-                        {isTyping && (
-                            <motion.div
-                                initial={{ opacity: 0, y: -10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, y: -10 }}
-                                className="absolute top-full left-0 right-0 mt-4 bg-slate-900/95 backdrop-blur-2xl border border-slate-700/50 rounded-2xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.5)] z-50 p-2"
+                    {/* Action Buttons */}
+                    <div className="flex flex-wrap items-center justify-center gap-4 mt-8">
+                        <button
+                            onClick={() => handleSearch()}
+                            className="px-8 py-3 bg-indigo-600/20 border border-indigo-500/30 rounded-xl text-indigo-100 font-medium hover:bg-indigo-600/40 hover:border-indigo-500/50 hover:shadow-[0_0_20px_rgba(99,102,241,0.3)] transition-all flex items-center gap-2"
+                        >
+                            <Search className="w-4 h-4" />
+                            Explore Web
+                        </button>
+                        <button
+                            onClick={() => {
+                                if (localQuery.trim()) handleSearch();
+                            }}
+                            className="px-8 py-3 bg-white/5 border border-white/10 rounded-xl text-slate-300 font-medium hover:bg-white/10 hover:border-white/20 transition-all flex items-center gap-2"
+                        >
+                            <Sparkles className="w-4 h-4 text-amber-400" />
+                            Deep Search
+                        </button>
+                    </div>
+                </motion.div>
+
+                {/* Trending Topics */}
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.6, duration: 0.8 }}
+                    className="mt-16 w-full max-w-4xl"
+                >
+                    <div className="flex items-center justify-center gap-2 mb-6">
+                        <TrendingUp className="w-4 h-4 text-indigo-400" />
+                        <span className="text-sm text-slate-400 font-medium uppercase tracking-widest">Trending Now</span>
+                    </div>
+                    <div className="flex flex-wrap justify-center gap-3">
+                        {TRENDING.map((item, i) => (
+                            <button
+                                key={i}
+                                onClick={() => handleSearch(item)}
+                                className="px-4 py-2 glass-panel hover:bg-white/10 border border-white/5 rounded-full text-sm text-slate-300 transition-all hover:text-white hover:border-indigo-500/30 hover:shadow-[0_0_15px_rgba(99,102,241,0.2)] flex items-center gap-2"
                             >
-                                {!localQuery ? (
-                                    <>
-                                        <div className="px-4 py-2 text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] flex items-center gap-2">
-                                            <TrendingUp className="w-3 h-3 text-indigo-400" /> Trending Topics
-                                        </div>
-                                        {SUGGESTIONS.map((s, i) => (
-                                            <button
-                                                key={i}
-                                                onClick={() => {
-                                                    setLocalQuery(s);
-                                                    setTimeout(() => {
-                                                        navigate(`/search?q=${encodeURIComponent(s)}`);
-                                                    }, 50);
-                                                }}
-                                                className="w-full text-left px-4 py-3 text-slate-300 hover:bg-white/5 hover:text-white transition-all rounded-xl flex items-center justify-between group/item"
-                                            >
-                                                <span className="font-medium">{s}</span>
-                                                <Command className="w-3 h-3 opacity-0 group-hover/item:opacity-50 transition-opacity" />
-                                            </button>
-                                        ))}
-                                    </>
-                                ) : suggestions.length > 0 ? (
-                                    <>
-                                        <div className="px-4 py-2 text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] flex items-center gap-2">
-                                            <Sparkles className="w-3 h-3 text-indigo-400" /> Neural Predictions
-                                        </div>
-                                        {suggestions.map((s, i) => (
-                                            <button
-                                                key={i}
-                                                onClick={() => {
-                                                    setLocalQuery(s);
-                                                    setTimeout(() => {
-                                                        navigate(`/search?q=${encodeURIComponent(s)}`);
-                                                    }, 50);
-                                                }}
-                                                className="w-full text-left px-4 py-3 text-slate-300 hover:bg-indigo-500/10 hover:text-white transition-all rounded-xl flex items-center gap-4 group/item"
-                                            >
-                                                <Clock className="w-4 h-4 text-slate-500 group-hover/item:text-indigo-400" />
-                                                <span className="font-semibold">{s}</span>
-                                            </button>
-                                        ))}
-                                    </>
-                                ) : null}
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
-                </div>
+                                {item}
+                                <ExternalLink className="w-3 h-3 opacity-50" />
+                            </button>
+                        ))}
+                    </div>
+                </motion.div>
+            </main>
 
-                {/* Footer / Status */}
-                <div className="flex gap-6 mt-8">
-                    <button className="px-4 py-2 rounded-full bg-slate-800/50 border border-slate-700/50 hover:bg-slate-700/50 transition-colors text-sm text-slate-400 font-medium backdrop-blur-sm">
-                        Deep Search
-                    </button>
-                    <button className="px-4 py-2 rounded-full bg-slate-800/50 border border-slate-700/50 hover:bg-slate-700/50 transition-colors text-sm text-slate-400 font-medium backdrop-blur-sm">
-                        I'm Feeling Lucky
-                    </button>
+            {/* Minimal Background Footer */}
+            <footer className="mt-auto py-6 border-t border-white/5 relative z-10">
+                <div className="max-w-7xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 font-medium tracking-wide">
+                    <div className="mb-4 sm:mb-0">
+                        <span className="text-indigo-400 mr-2">●</span> Seekora Systems 2026
+                    </div>
+                    <div className="flex items-center gap-8">
+                        <a href="#" className="hover:text-slate-300 transition-colors">Privacy</a>
+                        <a href="#" className="hover:text-slate-300 transition-colors">Terms</a>
+                        <a href="#" className="hover:text-slate-300 transition-colors">Developers</a>
+                        <a href="#" className="hover:text-slate-300 transition-colors">Settings</a>
+                    </div>
                 </div>
-            </motion.div>
-
-            {/* Footer Copyright */}
-            <footer className="absolute bottom-6 text-center w-full text-slate-600 text-xs font-medium tracking-wide">
-                SEEKORA INTELLIGENCE &nbsp; • &nbsp; V2.0 ENTERPRISE
             </footer>
-
-            <VoiceOverlay isOpen={isVoiceOpen} onClose={() => setIsVoiceOpen(false)} />
         </div>
     );
 }
+

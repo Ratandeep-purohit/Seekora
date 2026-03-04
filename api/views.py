@@ -3,8 +3,9 @@ from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from rest_framework.reverse import reverse
 from core.models import WebPage, SearchIndex
-from django.db.models import Sum, Q
+from django.db.models import Sum, Q, Count
 from django.db import models
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
 @api_view(['GET'])
 def api_root(request, format=None):
@@ -12,12 +13,16 @@ def api_root(request, format=None):
         'search': reverse('api-search', request=request, format=format),
         'autocomplete': reverse('api-autocomplete', request=request, format=format),
         'status': 'Online',
-        'version': '2.0.0-Enterprise'
+        'version': '3.0.0-Google-Edition'
     })
 
 from crawler.crawler_engine import SeekoraCrawler
 from crawler.query_processor import query_processor
 import time
+import requests
+import logging
+
+logger = logging.getLogger(__name__)
 
 class SearchAPIView(APIView):
     def get(self, request):
@@ -37,71 +42,252 @@ class SearchAPIView(APIView):
         query_analysis = query_processor.process(query)
         processed_tokens = query_analysis['stemmed_tokens']
         
-        # Log query processing
-        if query_analysis['corrections']:
-            print(f"🔧 Spell corrections: {query_analysis['corrections']}")
-        if query_analysis['removed_stopwords']:
-            print(f"🗑️ Removed stopwords: {query_analysis['removed_stopwords']}")
-        
+        page = int(request.query_params.get('page', 1))
+        limit = int(request.query_params.get('limit', 10))
+
         # 1. First search local MySQL index
         local_results_count = WebPage.objects.filter(
             index_entries__word__in=processed_tokens
         ).distinct().count()
         
         crawl_stats = None
-        # 2. If results < 10 → trigger LIVE CRAWLING
-        if local_results_count < 10:
+        discovery_results = []
+        # 2. If results < 10 → trigger LIVE CRAWLING (ONLY ON PAGE 1)
+        if page == 1 and local_results_count < 10:
             print(f"🌐 Triggering live crawl (local results: {local_results_count})")
             crawler = SeekoraCrawler()
-            crawl_stats = crawler.live_federated_search(query)
+            crawl_stats, discovery_results = crawler.live_federated_search(query)
             
         # 3. Refetch with newly crawled data
         base_qs = WebPage.objects.filter(
             index_entries__word__in=processed_tokens
         ).distinct()
 
+        original_query = query
+        
         if search_type == 'images':
-            response_data = self._search_images(base_qs, processed_tokens)
-        elif search_type == 'videos':
-            response_data = self._search_videos(base_qs, processed_tokens)
+            response_data = self._search_images(base_qs, processed_tokens, page, limit, original_query)
         elif search_type == 'news':
-            response_data = self._search_news(base_qs, processed_tokens)
+            response_data = self._search_news(base_qs, processed_tokens, page, limit, original_query)
+        elif search_type == 'videos':
+            response_data = self._search_videos(base_qs, processed_tokens, page, limit, original_query)
         else:
-            response_data = self._search_all(base_qs, processed_tokens)
+            response_data = self._search_all(base_qs, processed_tokens, page, limit, discovery_results, original_query)
         
         # Add metadata
         query_time = time.time() - start_time
         response_data['meta'] = {
             'query_time': round(query_time, 3),
-            'result_count': len(response_data.get('results', [])) + 
-                           len(response_data.get('images', [])) + 
-                           len(response_data.get('videos', [])),
-            'original_query': query,
+            'result_count': response_data.get('count', 0),
+            'page': page,
+            'limit': limit,
+            'original_query': original_query,
             'processed_query': ' '.join(processed_tokens),
-            'crawl_stats': crawl_stats
+            'crawl_stats': crawl_stats,
+            'spelling': query_analysis.get('corrections', {}),
         }
         
         return Response(response_data)
 
-    def _search_all(self, qs, words):
-        # Multi-Pipeline Parallel Execution
-        from crawler.pipelines import NewsPipeline, VideoPipeline
+    def _get_google_web_results(self, query, start=1, num=10):
+        """Fetch web results from Google Custom Search API"""
+        from django.conf import settings
+        
+        api_key = getattr(settings, 'GOOGLE_API_KEY', None)
+        cx = getattr(settings, 'GOOGLE_CX', None)
+        
+        if not api_key or not cx:
+            return [], 0
+        
+        try:
+            search_url = "https://www.googleapis.com/customsearch/v1"
+            params = {
+                'key': api_key,
+                'cx': cx,
+                'q': query,
+                'start': start,
+                'num': min(num, 10),  # Google API max is 10 per request
+            }
+            
+            response = requests.get(search_url, params=params, timeout=8)
+            
+            if response.status_code == 200:
+                data = response.json()
+                total = int(data.get('searchInformation', {}).get('totalResults', 0))
+                results = []
+                
+                for item in data.get('items', []):
+                    # Extract thumbnail
+                    thumb = None
+                    pagemap = item.get('pagemap', {})
+                    if 'cse_thumbnail' in pagemap:
+                        thumb = pagemap['cse_thumbnail'][0].get('src')
+                    elif 'cse_image' in pagemap:
+                        thumb = pagemap['cse_image'][0].get('src')
+                    
+                    # Extract favicon
+                    favicon = None
+                    if 'metatags' in pagemap and pagemap['metatags']:
+                        favicon = pagemap['metatags'][0].get('og:image')
+                    
+                    results.append({
+                        'title': item.get('title', ''),
+                        'url': item.get('link', ''),
+                        'displayUrl': item.get('displayLink', ''),
+                        'snippet': item.get('snippet', ''),
+                        'thumbnail': thumb,
+                        'favicon': favicon,
+                        'source': 'google',
+                    })
+                
+                return results, total
+            else:
+                logger.error(f"Google Web Search Error: {response.status_code}")
+                
+        except Exception as e:
+            logger.error(f"Google Web Search failed: {e}")
+        
+        return [], 0
+
+    def _get_knowledge_panel(self, query):
+        """Try to get knowledge panel data from Google"""
+        from django.conf import settings
+        
+        api_key = getattr(settings, 'GOOGLE_API_KEY', None)
+        cx = getattr(settings, 'GOOGLE_CX', None)
+        
+        if not api_key or not cx:
+            return None
+        
+        try:
+            search_url = "https://www.googleapis.com/customsearch/v1"
+            params = {
+                'key': api_key,
+                'cx': cx,
+                'q': query,
+                'num': 1,
+            }
+            
+            response = requests.get(search_url, params=params, timeout=5)
+            
+            if response.status_code == 200:
+                data = response.json()
+                
+                # Check for spelling suggestion
+                spelling = data.get('spelling', {})
+                
+                # Try to extract knowledge-like info from first result
+                items = data.get('items', [])
+                if items:
+                    first = items[0]
+                    pagemap = first.get('pagemap', {})
+                    
+                    # Look for rich snippet data
+                    metatags = pagemap.get('metatags', [{}])[0] if pagemap.get('metatags') else {}
+                    
+                    panel = {
+                        'title': metatags.get('og:title') or first.get('title', ''),
+                        'description': metatags.get('og:description') or first.get('snippet', ''),
+                        'image': metatags.get('og:image'),
+                        'url': first.get('link', ''),
+                        'source': first.get('displayLink', ''),
+                    }
+                    
+                    # Only return if we have meaningful data
+                    if panel['description'] and len(panel['description']) > 50:
+                        return panel
+                        
+        except Exception as e:
+            logger.error(f"Knowledge panel failed: {e}")
+        
+        return None
+
+    def _search_all(self, qs, words, page, limit, discovery_results=[], original_query=""):
+        from crawler.pipelines import NewsPipeline, VideoPipeline, ImagePipeline
         from concurrent.futures import ThreadPoolExecutor
         
-        # 1. Start parallel tasks
-        with ThreadPoolExecutor(max_workers=3) as executor:
-            future_news = executor.submit(NewsPipeline().search, ' '.join(words))
-            future_videos = executor.submit(VideoPipeline().search, ' '.join(words))
+        news_results = []
+        video_results = []
+        global_images = []
+        google_results = []
+        google_total = 0
+        knowledge_panel = None
+        people_also_ask = []
+
+        pipe_query = original_query or ' '.join(words)
+        google_start = (page - 1) * limit + 1
+        
+        # Parallel execution for all data sources
+        with ThreadPoolExecutor(max_workers=6) as executor:
+            # Always fetch Google web results
+            future_google = executor.submit(self._get_google_web_results, pipe_query, google_start, limit)
             
-            # 2. Local Search (Main Thread)
-            # Weighted Ranking: Title (10x), Meta (5x), Content (1x)
-            # Plus Freshness Boost: (Weight * 1.2) if indexed in last 24 hours
+            if page == 1:
+                future_news = executor.submit(NewsPipeline().search, pipe_query)
+                future_videos = executor.submit(VideoPipeline().search, pipe_query)
+                future_images = executor.submit(ImagePipeline().search, pipe_query)
+                future_knowledge = executor.submit(self._get_knowledge_panel, pipe_query)
+                future_paa = executor.submit(self._get_people_also_ask, pipe_query)
+            
+            # Collect Google results
+            try:
+                google_results, google_total = future_google.result(timeout=10)
+            except Exception:
+                print("Google web search timeout")
+            
+            if page == 1:
+                try:
+                    news_results = future_news.result(timeout=4) or []
+                except:
+                    print("News timeout")
+                    
+                try:
+                    video_results = future_videos.result(timeout=4) or []
+                except:
+                    print("Video timeout")
+
+                try:
+                    platinum_images = future_images.result(timeout=12) or []
+                    for p_img in platinum_images[:20]:
+                        global_images.append({
+                            'url': p_img['url'],
+                            'alt_text': p_img.get('title', ''),
+                            'thumbnail': p_img.get('thumbnail') or p_img['url'],
+                        })
+                except:
+                    print("Image timeout")
+
+                try:
+                    knowledge_panel = future_knowledge.result(timeout=5)
+                except:
+                    print("Knowledge panel timeout")
+                    
+                try:
+                    people_also_ask = future_paa.result(timeout=5) or []
+                except:
+                    print("PAA timeout")
+
+        # Fallback to Discovery Thumbnails if Platinum failed
+        if page == 1 and not global_images:
+            for res in discovery_results:
+                if res.get('thumbnail'):
+                    global_images.append({
+                        'url': res['thumbnail'],
+                        'alt_text': res.get('title', ''),
+                    })
+
+        # Merge Google results with local results
+        # Google results take priority
+        data = google_results.copy()
+        
+        # If Google returned few results, supplement with local
+        if len(data) < limit:
             from django.utils import timezone
             import datetime
             now = timezone.now()
             yesterday = now - datetime.timedelta(days=1)
 
-            results = (
+            annotated_qs = (
                 qs.annotate(
                     base_relevance=Sum('index_entries__weight', filter=Q(index_entries__word__in=words))
                 )
@@ -112,123 +298,167 @@ class SearchAPIView(APIView):
                         output_field=models.FloatField(),
                     )
                 )
-                .order_by('-relevance')[:40]
+                .order_by('-relevance')
             )
-            
-            data = []
-            global_images = []
-            for page in results:
-                page_imgs = list(page.images.values('url', 'alt_text')[:3])
-                global_images.extend(page_imgs[:2])
-                data.append(self._serialize_page(page, page_imgs))
-        
-        # 3. Collect Results
-        news_results = future_news.result()
-        video_results = future_videos.result()
 
-        # Return dictionary with full multi-vertical results
+            paginator = Paginator(annotated_qs, limit)
+            try:
+                results_page = paginator.page(page)
+            except (PageNotAnInteger, EmptyPage):
+                results_page = []
+
+            google_urls = {r['url'] for r in data}
+            if results_page:
+                for page_obj in results_page:
+                    if page_obj.url not in google_urls:
+                        page_imgs = list(page_obj.images.values('url', 'alt_text')[:1])
+                        if page == 1 and len(global_images) < 20:
+                            global_images.extend(page_imgs)
+                        data.append(self._serialize_page(page_obj, page_imgs))
+        
+        total_count = max(google_total, len(data))
+        
         return {
-            'results': data,
-            'news': news_results[:5],     # Top 5 news
-            'videos': video_results[:5],  # Top 5 videos (Live Fetch)
-            'images': global_images[:10]  # Featured images (from local index to keep speed)
+            'results': data[:limit],
+            'count': total_count,
+            'next': page * limit < total_count,
+            'previous': page > 1,
+            'news': news_results[:8],
+            'videos': video_results[:5],
+            'images': global_images[:20],
+            'knowledge_panel': knowledge_panel,
+            'people_also_ask': people_also_ask,
         }
 
-    def _search_images(self, qs, words):
-        # 1. Fetch relevant pages with images
-        results = (
+    def _get_people_also_ask(self, query):
+        """Generate 'People Also Ask' style suggestions"""
+        suggestions = [
+            f"What is {query}?",
+            f"How does {query} work?",
+            f"Why is {query} important?",
+            f"{query} vs alternatives",
+        ]
+        return suggestions
+
+    def _search_images(self, qs, words, page, limit, original_query=""):
+        """Dedicated Image Search Vertical"""
+        from crawler.pipelines import ImagePipeline
+        pipe_query = original_query or ' '.join(words)
+        
+        # 1. Primary: Platinum results from Google Search API
+        platinum_images = ImagePipeline().search(pipe_query)
+        
+        # 2. Local: Crawled images from DB
+        local_images = []
+        local_qs = (
             qs.filter(images__isnull=False)
             .annotate(relevance=Sum('index_entries__weight', filter=Q(index_entries__word__in=words)))
-            .order_by('-relevance')[:50]
+            .order_by('-relevance')
         )
         
-        # 2. Score individual images
-        scored_images = []
-        seen_urls = set()
-        query_terms = [w.lower() for w in words]
-        
-        for page in results:
-            # Base page relevance (Only applies to META images)
-            page_score = getattr(page, 'relevance', 0) or 0
-            
-            for img in page.images.all():
-                if img.url in seen_urls: continue
-                seen_urls.add(img.url)
-                
-                alt_lower = (img.alt_text or "").lower()
-                url_lower = img.url.lower()
-                
-                # JUNK FILTER: Explicitly skip common junk assets
-                if any(x in url_lower for x in ['logo', 'icon', 'button', 'sprite', 'avatar', 'user', 'lock', 'search', 'menu']):
-                    continue
-                    
-                # Strict Scoring Logic
-                img_score = 0
-                
-                # 1. Source Importance
-                # OG/Twitter images are trusted to represent the page topic
-                if 'og:image' in (img.alt_text or "") or 'twitter:image' in (img.alt_text or ""):
-                    img_score = page_score * 0.8  # Default trust
-                
-                # 2. Content Relevance (The Real Check)
-                # Check for query terms in Alt Text
-                alt_matches = sum(1 for term in query_terms if term in alt_lower.split())
-                if alt_matches > 0:
-                    img_score += (alt_matches * 150)  # MASSIVE BOOST for confirmed relevance
-                
-                # Check for query terms in Filename
-                url_matches = sum(1 for term in query_terms if term in url_lower)
-                if url_matches > 0:
-                    img_score += 50
-                    
-                # 3. Penalty for "Indiana" vs "India" confusion
-                # If query is "India" but alt says "Indiana", penalize
-                if 'india' in query_terms and 'indiana' in alt_lower:
-                    img_score -= 500
-                
-                # FILTER: Only keep if it has significant relevance
-                # Threshold: Must match at least one term OR be a trusted OG image on a relevant page
-                if img_score > 20: 
-                    scored_images.append({
-                        'data': {
-                            'url': img.url,
-                            'alt_text': img.alt_text,
-                            'parent_url': page.url,
-                            'parent_title': page.title
-                        },
-                        'score': img_score
+        p_limit = 10
+        local_paginator = Paginator(local_qs, p_limit)
+        try:
+            p_chunk = local_paginator.page(1)
+            for p in p_chunk:
+                for img in p.images.all()[:3]:
+                    local_images.append({
+                        'url': img.url,
+                        'alt_text': img.alt_text or p.title,
+                        'thumbnail': img.url,
+                        'parent_url': p.url,
+                        'parent_title': p.title,
                     })
-        
-        # 3. Sort by score and take top results
-        scored_images.sort(key=lambda x: x['score'], reverse=True)
-        final_images = [item['data'] for item in scored_images[:100]]
-        
-        return {'results': [], 'images': final_images}
+        except:
+            pass
 
-    def _search_news(self, qs, words):
+        # Merge (Platinum Priority)
+        final_images = []
+        seen = set()
+        
+        for p_img in platinum_images:
+            if p_img['url'] not in seen:
+                final_images.append({
+                    'url': p_img['url'],
+                    'alt_text': p_img.get('title', ''),
+                    'thumbnail': p_img.get('thumbnail') or p_img['url'],
+                    'parent_url': p_img.get('context', ''),
+                    'parent_title': p_img.get('title', ''),
+                    'width': 0,
+                    'height': 0,
+                })
+                seen.add(p_img['url'])
+
+        for l_img in local_images:
+            if l_img['url'] not in seen:
+                final_images.append(l_img)
+                seen.add(l_img['url'])
+
+        # Manual Pagination
+        total = len(final_images)
+        start = (page - 1) * limit
+        end = start + limit
+        
+        sliced_results = final_images[start:end] if start < total else []
+        
+        return {
+            'results': [],
+            'images': sliced_results,
+            'news': [],
+            'videos': [],
+            'count': total,
+            'next': end < total
+        }
+
+    def _search_news(self, qs, words, page, limit, original_query=""):
         """Dedicated News Tab Search"""
         from crawler.pipelines import NewsPipeline
-        # Fetch MORE news for the tab
-        live_news = NewsPipeline().search(' '.join(words))
-        return {'results': [], 'news': live_news}
+        pipe_query = original_query or ' '.join(words)
+        live_news = NewsPipeline().search(pipe_query)
+        
+        total = len(live_news)
+        start = (page - 1) * limit
+        end = start + limit
+        sliced_news = live_news[start:end] if start < total else []
+        
+        return {
+            'results': [], 
+            'news': sliced_news, 
+            'images': [],
+            'videos': [],
+            'count': total
+        }
 
-    def _search_videos(self, qs, words):
+    def _search_videos(self, qs, words, page, limit, original_query=""):
         """Dedicated Video Tab Search"""
         from crawler.pipelines import VideoPipeline
-        # Fetch MORE videos for the tab
-        live_videos = VideoPipeline().search(' '.join(words))
-        return {'results': [], 'videos': live_videos}
+        pipe_query = original_query or ' '.join(words)
+        live_videos = VideoPipeline().search(pipe_query)
+        
+        total = len(live_videos)
+        start = (page - 1) * limit
+        end = start + limit
+        sliced_videos = live_videos[start:end] if start < total else []
+        
+        return {
+            'results': [], 
+            'videos': sliced_videos, 
+            'news': [],
+            'images': [],
+            'count': total
+        }
 
     def _serialize_page(self, page, images):
         return {
             'id': str(page.id),
             'title': page.title,
             'url': page.url,
-            'displayUrl': f"{page.domain} › {page.url.split('/')[-1]}",
+            'displayUrl': page.domain,
             'snippet': (page.description or page.content[:200]) + "...",
             'relevance': getattr(page, 'relevance', 0),
             'images': images,
-            'videos': list(page.videos.values('url', 'title', 'provider')[:2])
+            'videos': list(page.videos.values('url', 'title', 'provider')[:2]),
+            'source': 'local',
         }
 
 class AutocompleteAPIView(APIView):
@@ -237,7 +467,6 @@ class AutocompleteAPIView(APIView):
         if not query:
             return Response([])
 
-        # Suggest words from the index that start with the query
         suggestions = (
             SearchIndex.objects.filter(word__istartswith=query)
             .values_list('word', flat=True)

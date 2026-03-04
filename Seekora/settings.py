@@ -11,19 +11,33 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
+import os
+import environ
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Initialize environment variables
+env = environ.Env(
+    # set casting, default value
+    DEBUG=(bool, False)
+)
+# Read .env file
+environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-2@x13vsy08b++mx4n%f@oh-b%bco=z)&-)&)l!jv1ghec6al1t'
+SECRET_KEY = env('SECRET_KEY', default='django-insecure-fallback-key')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = env('DEBUG')
+
+# Google Custom Search API
+GOOGLE_API_KEY = env('GOOGLE_API_KEY', default='')
+GOOGLE_CX = env('GOOGLE_CX', default='')
 
 ALLOWED_HOSTS = []
 
@@ -85,14 +99,7 @@ WSGI_APPLICATION = 'Seekora.wsgi.application'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'seekora',
-        'USER': 'root',
-        'PASSWORD': 'R@j@t2004',
-        'HOST': 'localhost',
-        'PORT': '3306',
-    }
+    'default': env.db('DATABASE_URL', default=f'sqlite:///{BASE_DIR / "db.sqlite3"}')
 }
 
 

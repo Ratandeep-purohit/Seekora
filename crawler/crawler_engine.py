@@ -82,47 +82,40 @@ class SeekoraCrawler:
         if is_tech:
             # Tech-focused diverse sources
             fallback_urls = [
-                # Official Documentation
+                # Official Documentation & References
                 f"https://en.wikipedia.org/wiki/{query_wiki}",
                 f"https://docs.python.org/3/search.html?q={query_encoded}",
                 f"https://developer.mozilla.org/en-US/search?q={query_encoded}",
-                
-                # Community & Tutorials
                 f"https://stackoverflow.com/search?q={query_encoded}",
-                f"https://www.geeksforgeeks.org/{query_slug}/",
-                f"https://www.tutorialspoint.com/{query_slug}.htm",
-                f"https://www.w3schools.com/{query_slug}/",
                 
-                # Code Repositories
-                f"https://github.com/topics/{query_slug}",
-                f"https://github.com/search?q={query_encoded}&type=repositories",
+                # Tech News & Blogs
+                f"https://techcrunch.com/search/{query_encoded}",
+                f"https://www.theverge.com/search?q={query_encoded}",
+                f"https://dev.to/search?q={query_encoded}",
                 
-                # Learning Platforms
+                # Code & Tutorials
+                f"https://github.com/search?q={query_encoded}",
+                f"https://www.geeksforgeeks.org/search/?q={query_encoded}",
+                f"https://www.w3schools.com/search/search.asp?q={query_encoded}",
                 f"https://realpython.com/search?q={query_encoded}",
-                f"https://www.freecodecamp.org/news/search/?query={query_encoded}",
-                
-                # Reference Sites
-                f"https://devdocs.io/search?q={query_encoded}",
-                f"https://www.programiz.com/{query_slug}/",
             ]
         else:
             # General knowledge diverse sources
             fallback_urls = [
-                # Encyclopedias
+                # Encyclopedias & Reference
                 f"https://en.wikipedia.org/wiki/{query_wiki}",
-                f"https://simple.wikipedia.org/wiki/{query_wiki}",
                 f"https://www.britannica.com/search?query={query_encoded}",
                 
-                # Educational
-                f"https://www.khanacademy.org/search?page_search_query={query_encoded}",
-                f"https://www.coursera.org/search?query={query_encoded}",
+                # News Outlets (Global)
+                f"https://www.bbc.co.uk/search?q={query_encoded}",
+                f"https://www.cnn.com/search?q={query_encoded}",
+                f"https://www.nytimes.com/search?query={query_encoded}",
+                f"https://www.theguardian.com/books/data/search?query={query_encoded}",
                 
-                # News & Articles
-                f"https://www.sciencedaily.com/search/?keyword={query_encoded}",
+                # Science & Education
                 f"https://www.nationalgeographic.com/search?q={query_encoded}",
-                
-                # Reference
-                f"https://www.merriam-webster.com/dictionary/{query_slug}",
+                f"https://www.sciencedaily.com/search/?keyword={query_encoded}",
+                f"https://www.investopedia.com/search?q={query_encoded}",
             ]
         
         logger.info(f"🔄 Using {len(fallback_urls)} diverse fallback URLs")
@@ -369,7 +362,7 @@ class SeekoraCrawler:
     def live_federated_search(self, query):
         """
         Triggers discovery and parallel indexing if local results are low
-        Returns crawl statistics
+        Returns (crawl statistics, rich discovery results)
         """
         # Reset stats
         self.stats = {
@@ -379,15 +372,18 @@ class SeekoraCrawler:
             'urls_failed': 0,
         }
         
-        urls = self.discover_urls(query)
+        from .search_discovery import search_discovery
+        discovery_results = search_discovery.discover_advanced(query)
+        urls = [r['url'] for r in discovery_results]
+        
         if not urls:
             logger.warning(f"⚠️ No URLs discovered for query: {query}")
-            return self.stats
+            return self.stats, []
         
-        # Use ThreadPool to simulate async within a Django request context (safe & simple)
+        # Use ThreadPool to simulate async within a Django request context
         with ThreadPoolExecutor(max_workers=10) as executor:
             executor.map(self.crawl_url, urls)
         
         logger.info(f"📊 Crawl Stats: {self.stats}")
-        return self.stats
+        return self.stats, discovery_results
 
