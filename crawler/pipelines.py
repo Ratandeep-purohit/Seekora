@@ -296,9 +296,9 @@ class ImagePipeline:
 
         logger.info(f"🖼️ Google Image API found {len(unique_images)} total unique items (after filtering)")
         
-        # If Google returned very few, add fallback
+        # If Google returned very few, add Bing fallback
         if len(unique_images) < 10:
-            fallback = self._fallback_search(query)
+            fallback = self._bing_image_search(query)
             for fb in fallback:
                 if fb['url'] not in seen:
                     unique_images.append(fb)
@@ -306,31 +306,45 @@ class ImagePipeline:
         
         return unique_images
 
-    def _fallback_search(self, query):
-        """Fallback: Search DuckDuckGo for images"""
+    def _bing_image_search(self, query, limit=30):
+        """Fallback image search via Bing Image Search HTML scraping"""
         images = []
         headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Accept-Language': 'en-US,en;q=0.9',
         }
         try:
-            search_url = f"https://html.duckduckgo.com/html/?q={quote_plus(query + ' images')}"
-            response = requests.get(search_url, headers=headers, timeout=5)
-            
+            import re as _re
+            search_url = f"https://www.bing.com/images/search?q={quote_plus(query)}&FORM=HDRSC2"
+            response = requests.get(search_url, headers=headers, timeout=10)
             if response.status_code == 200:
-                soup = BeautifulSoup(response.text, 'html.parser')
-                for link in soup.find_all('a', class_='result__a', href=True):
-                    href = link['href']
-                    title = link.get_text()
-                    if any(ext in href.lower() for ext in ['.jpg', '.jpeg', '.png', '.webp', '.gif']):
-                        images.append({
-                            'url': href,
-                            'thumbnail': href,
-                            'title': title,
-                            'context': '',
-                            'type': 'image',
-                            'source': 'duckduckgo'
-                        })
+                # Bing embeds image data in HTML-encoded JSON with murl (media URL) fields
+                pattern = r'murl&quot;:&quot;(https?://[^&]+)&quot;'
+                matches = _re.findall(pattern, response.text)
+                # Also try to extract thumbnail URLs
+                thumb_pattern = r'turl&quot;:&quot;(https?://[^&]+)&quot;'
+                thumbs = _re.findall(thumb_pattern, response.text)
+                for i, url in enumerate(matches[:limit]):
+                    # Skip small icons/logos
+                    if any(skip in url.lower() for skip in ['/logo', '/icon', '/favicon', 'sprite']):
+                        continue
+                    thumb = thumbs[i] if i < len(thumbs) else url
+                    images.append({
+                        'url': url,
+                        'thumbnail': thumb,
+                        'title': query,
+                        'context': '',
+                        'type': 'image',
+                        'source': 'bing',
+                        'width': 0,
+                        'height': 0,
+                    })
         except Exception as e:
-            logger.error(f"DDG Image fallback failed: {e}")
+            logger.error(f"Bing Image fallback failed: {e}")
         
-        return images[:20]
+        logger.info(f"🖼️ Bing fallback found {len(images)} images")
+        return images[:limit]
+
+    def _fallback_search(self, query):
+        """Old DuckDuckGo fallback — kept for compatibility, now just calls Bing"""
+        return self._bing_image_search(query)

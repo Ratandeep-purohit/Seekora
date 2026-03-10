@@ -3,6 +3,17 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Search, Mic, Camera, X, Clock, TrendingUp, Sparkles, ExternalLink } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useSearchStore } from '../stores/searchStore';
+import ThemeSwitcher from '../components/ThemeSwitcher';
+
+// Live Clock hook
+function useLiveClock() {
+    const [now, setNow] = useState(new Date());
+    useEffect(() => {
+        const id = setInterval(() => setNow(new Date()), 1000);
+        return () => clearInterval(id);
+    }, []);
+    return now;
+}
 
 const TRENDING = [
     "Artificial General Intelligence",
@@ -15,6 +26,7 @@ const TRENDING = [
 
 export default function HomePage() {
     const navigate = useNavigate();
+    const now = useLiveClock();
     const { setQuery, suggestions, setSuggestions, searchHistory, addToHistory } = useSearchStore();
     const [localQuery, setLocalQuery] = useState('');
     const [showSuggestions, setShowSuggestions] = useState(false);
@@ -104,19 +116,33 @@ export default function HomePage() {
     return (
         <div className="min-h-screen relative flex flex-col text-slate-200 overflow-hidden font-sans">
             {/* Background elements */}
-            <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-indigo-600/20 blur-[120px] rounded-full pointer-events-none" />
-            <div className="absolute bottom-[-10%] right-[-10%] w-[30%] h-[30%] bg-purple-600/20 blur-[100px] rounded-full pointer-events-none" />
+            <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary-600/20 blur-[120px] rounded-full pointer-events-none" />
+            <div className="absolute bottom-[-10%] right-[-10%] w-[30%] h-[30%] bg-primary-600/20 blur-[100px] rounded-full pointer-events-none" />
 
             {/* Top Navigation */}
             <header className="flex items-center justify-between px-6 py-4 z-10 relative">
-                <div className="flex items-center gap-2">
-                    <Sparkles className="w-5 h-5 text-indigo-400" />
-                    <span className="font-display font-semibold text-lg tracking-wide text-white">Seekora</span>
+                <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2">
+                        <Sparkles className="w-5 h-5 text-primary-400" />
+                        <span className="font-display font-semibold text-lg tracking-wide text-white">Seekora</span>
+                    </div>
+                    {/* Compact clock beside logo */}
+                    <div className="hidden sm:flex items-center gap-2 px-3 py-1 rounded-full glass-panel border border-white/8 text-xs">
+                        <Clock className="w-3 h-3 text-primary-400" />
+                        <span className="text-white font-medium tabular-nums">
+                            {now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true })}
+                        </span>
+                        <span className="text-slate-500">·</span>
+                        <span className="text-slate-400">
+                            {now.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
+                        </span>
+                    </div>
                 </div>
                 <div className="flex items-center gap-6 text-sm font-medium">
+                    <ThemeSwitcher />
                     <a href="#" className="text-slate-400 hover:text-white transition-colors">Workspace</a>
                     <a href="#" className="text-slate-400 hover:text-white transition-colors">Images</a>
-                    <button className="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center text-white shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/50 transition-all border border-indigo-400/30 font-semibold">
+                    <button className="w-8 h-8 rounded-full bg-gradient-to-tr from-primary-500 to-primary-600 flex items-center justify-center text-white shadow-lg shadow-primary-500/30 hover:shadow-primary-500/50 transition-all border border-primary-400/30 font-semibold">
                         S
                     </button>
                 </div>
@@ -132,7 +158,7 @@ export default function HomePage() {
                     transition={{ duration: 0.8, ease: "easeOut" }}
                     className="mb-10 text-center"
                 >
-                    <div className="inline-block px-4 py-1.5 rounded-full border border-indigo-500/30 bg-indigo-500/10 text-indigo-300 text-xs font-medium tracking-wider mb-6 backdrop-blur-md">
+                    <div className="inline-block px-4 py-1.5 rounded-full border border-primary-500/30 bg-primary-500/10 text-primary-300 text-xs font-medium tracking-wider mb-6 backdrop-blur-md">
                         NEXT-GEN SEARCH ENGINE
                     </div>
                     <h1 className="text-6xl md:text-8xl font-display font-bold tracking-tight text-white mb-4">
@@ -156,7 +182,7 @@ export default function HomePage() {
                             glass-panel rounded-2xl flex items-center h-16 px-6 relative transition-all duration-300 input-glow
                             ${showSuggestions && suggestionList.length > 0 ? 'rounded-b-none border-b-transparent' : ''}
                         `}>
-                            <Search className="w-6 h-6 text-indigo-400/80 mr-4" />
+                            <Search className="w-6 h-6 text-primary-400/80 mr-4" />
 
                             <input
                                 ref={inputRef}
@@ -190,10 +216,10 @@ export default function HomePage() {
                             <div className="h-6 w-px bg-white/10 mx-2"></div>
 
                             <div className="flex items-center gap-1">
-                                <button type="button" className="p-2.5 hover:bg-white/10 rounded-xl transition-colors text-slate-400 hover:text-indigo-400 focus:outline-none">
+                                <button type="button" className="p-2.5 hover:bg-white/10 rounded-xl transition-colors text-slate-400 hover:text-primary-400 focus:outline-none">
                                     <Mic className="w-5 h-5" />
                                 </button>
-                                <button type="button" className="p-2.5 hover:bg-white/10 rounded-xl transition-colors text-slate-400 hover:text-indigo-400 focus:outline-none">
+                                <button type="button" className="p-2.5 hover:bg-white/10 rounded-xl transition-colors text-slate-400 hover:text-primary-400 focus:outline-none">
                                     <Camera className="w-5 h-5" />
                                 </button>
                             </div>
@@ -221,13 +247,13 @@ export default function HomePage() {
                                                         ${selectedIndex === i ? 'bg-white/10 text-white' : 'hover:bg-white/5 text-slate-300'}`}
                                                 >
                                                     {localQuery ? (
-                                                        <Search className={`w-4 h-4 ${selectedIndex === i ? 'text-indigo-400' : 'text-slate-500'}`} />
+                                                        <Search className={`w-4 h-4 ${selectedIndex === i ? 'text-primary-400' : 'text-slate-500'}`} />
                                                     ) : (
                                                         <Clock className="w-4 h-4 text-slate-500" />
                                                     )}
                                                     <span className="font-light tracking-wide flex-1">{item}</span>
                                                     {!localQuery && selectedIndex === i && (
-                                                        <span className="text-xs text-indigo-400 font-medium tracking-wider">SELECT</span>
+                                                        <span className="text-xs text-primary-400 font-medium tracking-wider">SELECT</span>
                                                     )}
                                                 </button>
                                             </li>
@@ -242,7 +268,7 @@ export default function HomePage() {
                     <div className="flex flex-wrap items-center justify-center gap-4 mt-8">
                         <button
                             onClick={() => handleSearch()}
-                            className="px-8 py-3 bg-indigo-600/20 border border-indigo-500/30 rounded-xl text-indigo-100 font-medium hover:bg-indigo-600/40 hover:border-indigo-500/50 hover:shadow-[0_0_20px_rgba(99,102,241,0.3)] transition-all flex items-center gap-2"
+                            className="px-8 py-3 bg-primary-600/20 border border-primary-500/30 rounded-xl text-primary-100 font-medium hover:bg-primary-600/40 hover:border-primary-500/50 hover:shadow-[0_0_20px_rgba(99,102,241,0.3)] transition-all flex items-center gap-2"
                         >
                             <Search className="w-4 h-4" />
                             Explore Web
@@ -253,7 +279,7 @@ export default function HomePage() {
                             }}
                             className="px-8 py-3 bg-white/5 border border-white/10 rounded-xl text-slate-300 font-medium hover:bg-white/10 hover:border-white/20 transition-all flex items-center gap-2"
                         >
-                            <Sparkles className="w-4 h-4 text-amber-400" />
+                            <Sparkles className="w-4 h-4 text-primary-400" />
                             Deep Search
                         </button>
                     </div>
@@ -267,7 +293,7 @@ export default function HomePage() {
                     className="mt-16 w-full max-w-4xl"
                 >
                     <div className="flex items-center justify-center gap-2 mb-6">
-                        <TrendingUp className="w-4 h-4 text-indigo-400" />
+                        <TrendingUp className="w-4 h-4 text-primary-400" />
                         <span className="text-sm text-slate-400 font-medium uppercase tracking-widest">Trending Now</span>
                     </div>
                     <div className="flex flex-wrap justify-center gap-3">
@@ -275,7 +301,7 @@ export default function HomePage() {
                             <button
                                 key={i}
                                 onClick={() => handleSearch(item)}
-                                className="px-4 py-2 glass-panel hover:bg-white/10 border border-white/5 rounded-full text-sm text-slate-300 transition-all hover:text-white hover:border-indigo-500/30 hover:shadow-[0_0_15px_rgba(99,102,241,0.2)] flex items-center gap-2"
+                                className="px-4 py-2 glass-panel hover:bg-white/10 border border-white/5 rounded-full text-sm text-slate-300 transition-all hover:text-white hover:border-primary-500/30 hover:shadow-[0_0_15px_rgba(99,102,241,0.2)] flex items-center gap-2"
                             >
                                 {item}
                                 <ExternalLink className="w-3 h-3 opacity-50" />
@@ -289,7 +315,7 @@ export default function HomePage() {
             <footer className="mt-auto py-6 border-t border-white/5 relative z-10">
                 <div className="max-w-7xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 font-medium tracking-wide">
                     <div className="mb-4 sm:mb-0">
-                        <span className="text-indigo-400 mr-2">●</span> Seekora Systems 2026
+                        <span className="text-primary-400 mr-2">●</span> Seekora Systems 2026
                     </div>
                     <div className="flex items-center gap-8">
                         <a href="#" className="hover:text-slate-300 transition-colors">Privacy</a>

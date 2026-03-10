@@ -3,6 +3,7 @@ import { Search, Mic, Camera, X, Image as ImageIcon, Newspaper, PlayCircle, Chev
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSearchStore } from '../stores/searchStore';
+import ThemeSwitcher from '../components/ThemeSwitcher';
 import { useQuery } from '@tanstack/react-query';
 
 const fetchResults = async (query: string, type: string = 'all', page: number = 1) => {
@@ -101,8 +102,8 @@ export default function ResultsPage() {
     return (
         <div className="min-h-screen relative flex flex-col text-slate-200 overflow-hidden font-sans">
             {/* Background elements */}
-            <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-indigo-600/10 blur-[150px] rounded-full pointer-events-none fixed" />
-            <div className="absolute top-[20%] right-[-10%] w-[30%] h-[40%] bg-purple-600/10 blur-[120px] rounded-full pointer-events-none fixed" />
+            <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-primary-600/10 blur-[150px] rounded-full pointer-events-none fixed" />
+            <div className="absolute top-[20%] right-[-10%] w-[30%] h-[40%] bg-primary-600/10 blur-[120px] rounded-full pointer-events-none fixed" />
 
             {/* ===== MODERN HEADER ===== */}
             <header className="sticky top-0 z-50 glass-panel border-b border-white/5 backdrop-blur-xl">
@@ -112,14 +113,14 @@ export default function ResultsPage() {
                         onClick={() => navigate('/')}
                         className="flex items-center gap-2 shrink-0 group"
                     >
-                        <Sparkles className="w-6 h-6 text-indigo-400 group-hover:text-indigo-300 transition-colors" />
-                        <span className="font-display font-semibold text-xl tracking-wide text-white group-hover:text-indigo-100 transition-colors">Seekora</span>
+                        <Sparkles className="w-6 h-6 text-primary-400 group-hover:text-primary-300 transition-colors" />
+                        <span className="font-display font-semibold text-xl tracking-wide text-white group-hover:text-primary-100 transition-colors">Seekora</span>
                     </button>
 
                     {/* Search Bar */}
                     <form onSubmit={handleSearch} className="flex-1 max-w-[720px]">
-                        <div className="relative flex items-center h-12 glass-panel border border-white/10 rounded-2xl px-5 focus-within:border-indigo-500/50 focus-within:shadow-[0_0_20px_rgba(99,102,241,0.2)] transition-all bg-white/5">
-                            <Search className="w-5 h-5 text-indigo-400/80 mr-3 shrink-0" />
+                        <div className="relative flex items-center h-12 glass-panel border border-white/10 rounded-2xl px-5 focus-within:border-primary-500/50 focus-within:shadow-[0_0_20px_rgba(99,102,241,0.2)] transition-all bg-white/5">
+                            <Search className="w-5 h-5 text-primary-400/80 mr-3 shrink-0" />
                             <input
                                 ref={inputRef}
                                 type="text"
@@ -142,10 +143,10 @@ export default function ResultsPage() {
                             )}
                             <div className="flex items-center gap-1 pl-3 border-l border-white/10">
                                 <button type="button" className="p-2 hover:bg-white/10 rounded-xl" title="Voice search">
-                                    <Mic className="w-4 h-4 text-slate-400 hover:text-indigo-400" />
+                                    <Mic className="w-4 h-4 text-slate-400 hover:text-primary-400" />
                                 </button>
                                 <button type="button" className="p-2 hover:bg-white/10 rounded-xl" title="Image search">
-                                    <Camera className="w-4 h-4 text-slate-400 hover:text-indigo-400" />
+                                    <Camera className="w-4 h-4 text-slate-400 hover:text-primary-400" />
                                 </button>
                             </div>
                         </div>
@@ -153,7 +154,8 @@ export default function ResultsPage() {
 
                     {/* Right side */}
                     <div className="hidden md:flex items-center gap-4 ml-auto shrink-0">
-                        <button className="w-9 h-9 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center text-white shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/50 transition-all font-semibold border border-white/10">
+                        <ThemeSwitcher />
+                        <button className="w-9 h-9 rounded-full bg-gradient-to-tr from-primary-500 to-primary-600 flex items-center justify-center text-white shadow-lg shadow-primary-500/30 hover:shadow-primary-500/50 transition-all font-semibold border border-white/10">
                             S
                         </button>
                     </div>
@@ -169,14 +171,14 @@ export default function ResultsPage() {
                                 key={tab.id}
                                 onClick={() => handleFilterChange(tab.id)}
                                 className={`flex items-center gap-2 px-4 py-3 text-[14px] font-medium transition-all relative
-                                    ${isActive ? 'text-indigo-400' : 'text-slate-400 hover:text-slate-200'}`}
+                                    ${isActive ? 'text-primary-400' : 'text-slate-400 hover:text-slate-200'}`}
                             >
                                 <Icon className="w-4 h-4" />
                                 {tab.label}
                                 {isActive && (
                                     <motion.div
                                         layoutId="activeTab"
-                                        className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-500 rounded-t-full shadow-[0_-2px_8px_rgba(99,102,241,0.5)]"
+                                        className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary-500 rounded-t-full shadow-[0_-2px_8px_rgba(99,102,241,0.5)]"
                                     />
                                 )}
                             </button>
@@ -195,7 +197,7 @@ export default function ResultsPage() {
                     >
                         <p className="text-[13px] text-slate-400 font-light flex items-center gap-2">
                             Found {totalItems?.toLocaleString()} intelligence nodes in
-                            <span className="text-indigo-300 font-mono bg-indigo-500/10 px-1.5 py-0.5 rounded border border-indigo-500/20">{results.meta.query_time}s</span>
+                            <span className="text-primary-300 font-mono bg-primary-500/10 px-1.5 py-0.5 rounded border border-primary-500/20">{results.meta.query_time}s</span>
                             {results.meta.crawl_stats?.urls_crawled > 0 && (
                                 <span className="text-emerald-400 flex items-center gap-1 ml-2">
                                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
@@ -219,13 +221,13 @@ export default function ResultsPage() {
                     <div className="max-w-[720px] ml-[20px] md:ml-[170px] lg:ml-[220px] mt-8 px-4 lg:px-0">
                         <div className="glass-card p-8 rounded-2xl">
                             <p className="text-white text-lg font-light mb-4">
-                                No data nodes match query <span className="text-indigo-400 font-medium">"{query}"</span>
+                                No data nodes match query <span className="text-primary-400 font-medium">"{query}"</span>
                             </p>
                             <p className="text-slate-400 text-sm font-medium mb-3 uppercase tracking-wider">Troubleshooting Protocol:</p>
                             <ul className="text-slate-300 text-sm space-y-2 list-none pl-0">
-                                <li className="flex items-center gap-2"><div className="w-1 h-1 rounded-full bg-indigo-500"></div>Verify spelling alignment</li>
-                                <li className="flex items-center gap-2"><div className="w-1 h-1 rounded-full bg-indigo-500"></div>Broaden search parameters</li>
-                                <li className="flex items-center gap-2"><div className="w-1 h-1 rounded-full bg-indigo-500"></div>Reduce query complexity</li>
+                                <li className="flex items-center gap-2"><div className="w-1 h-1 rounded-full bg-primary-500"></div>Verify spelling alignment</li>
+                                <li className="flex items-center gap-2"><div className="w-1 h-1 rounded-full bg-primary-500"></div>Broaden search parameters</li>
+                                <li className="flex items-center gap-2"><div className="w-1 h-1 rounded-full bg-primary-500"></div>Reduce query complexity</li>
                             </ul>
                         </div>
                     </div>
@@ -274,7 +276,7 @@ export default function ResultsPage() {
             <footer className="mt-auto py-6 border-t border-white/5 relative z-10 bg-black/20 backdrop-blur-md">
                 <div className="max-w-[1400px] mx-auto px-6 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 font-medium tracking-wide">
                     <div className="mb-4 sm:mb-0">
-                        <span className="text-indigo-400 mr-2">●</span> Global Index Node
+                        <span className="text-primary-400 mr-2">●</span> Global Index Node
                     </div>
                     <div className="flex items-center gap-6">
                         <a href="#" className="hover:text-slate-300 transition-colors">Documentation</a>
@@ -300,8 +302,8 @@ function AllTabContent({ results, currentData, query, currentPage, navigate, set
                 {currentPage === 1 && results?.news?.length > 0 && (
                     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mb-10">
                         <div className="flex items-center gap-3 mb-4">
-                            <div className="p-2 rounded-lg bg-indigo-500/10 border border-indigo-500/20">
-                                <Newspaper className="w-4 h-4 text-indigo-400" />
+                            <div className="p-2 rounded-lg bg-primary-500/10 border border-primary-500/20">
+                                <Newspaper className="w-4 h-4 text-primary-400" />
                             </div>
                             <h3 className="text-lg text-white font-medium">Real-time Intel</h3>
                         </div>
@@ -310,15 +312,15 @@ function AllTabContent({ results, currentData, query, currentPage, navigate, set
                                 <a key={i} href={news.url} target="_blank" rel="noopener noreferrer" className="flex gap-4 p-5 hover:bg-white/5 transition-colors group">
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-center gap-2 mb-2 text-xs text-slate-400 font-medium">
-                                            <span className="px-2 py-0.5 rounded text-indigo-300 bg-indigo-500/10 border border-indigo-500/20">{news.source}</span>
+                                            <span className="px-2 py-0.5 rounded text-primary-300 bg-primary-500/10 border border-primary-500/20">{news.source}</span>
                                             <span>• {news.time}</span>
                                         </div>
-                                        <h4 className="text-base text-slate-200 font-medium leading-snug line-clamp-2 group-hover:text-indigo-300 transition-colors mb-2">
+                                        <h4 className="text-base text-slate-200 font-medium leading-snug line-clamp-2 group-hover:text-primary-300 transition-colors mb-2">
                                             {news.title}
                                         </h4>
                                     </div>
                                     {news.thumbnail && (
-                                        <div className="w-28 h-20 rounded-xl overflow-hidden shrink-0 border border-white/10 group-hover:border-indigo-500/30 transition-colors">
+                                        <div className="w-28 h-20 rounded-xl overflow-hidden shrink-0 border border-white/10 group-hover:border-primary-500/30 transition-colors">
                                             <img src={news.thumbnail} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                                         </div>
                                     )}
@@ -344,7 +346,7 @@ function AllTabContent({ results, currentData, query, currentPage, navigate, set
                                     {result.favicon ? (
                                         <img src={result.favicon} alt="" className="w-4 h-4" />
                                     ) : (
-                                        <Globe className="w-3.5 h-3.5 text-indigo-400" />
+                                        <Globe className="w-3.5 h-3.5 text-primary-400" />
                                     )}
                                 </div>
                                 <div className="min-w-0 flex flex-col justify-center">
@@ -362,7 +364,7 @@ function AllTabContent({ results, currentData, query, currentPage, navigate, set
                                 href={result.url}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-xl text-indigo-300 hover:text-indigo-200 font-medium leading-snug block mb-3 result-link-hover"
+                                className="text-xl text-primary-300 hover:text-primary-200 font-medium leading-snug block mb-3 result-link-hover"
                             >
                                 {result.title}
                             </a>
@@ -376,8 +378,8 @@ function AllTabContent({ results, currentData, query, currentPage, navigate, set
                             {i === 0 && result.source === 'google' && (
                                 <div className="flex flex-wrap gap-x-6 gap-y-3 mt-4 pt-4 border-t border-white/5">
                                     {['Documentation Architecture', 'Implementation Details', 'API Reference'].map((link, j) => (
-                                        <a key={j} href="#" className="flex items-center gap-1.5 text-[13px] text-indigo-400 hover:text-indigo-300 font-medium transition-colors">
-                                            <div className="w-1 h-1 rounded-full bg-indigo-500" />
+                                        <a key={j} href="#" className="flex items-center gap-1.5 text-[13px] text-primary-400 hover:text-primary-300 font-medium transition-colors">
+                                            <div className="w-1 h-1 rounded-full bg-primary-500" />
                                             {link}
                                         </a>
                                     ))}
@@ -397,7 +399,7 @@ function AllTabContent({ results, currentData, query, currentPage, navigate, set
                 {/* Related Search Matrix */}
                 <div className="mt-8 glass-card rounded-2xl p-6">
                     <div className="flex items-center gap-2 mb-5">
-                        <Sparkles className="w-4 h-4 text-purple-400" />
+                        <Sparkles className="w-4 h-4 text-primary-400" />
                         <h4 className="text-sm text-white font-medium uppercase tracking-wider">Related Vectors</h4>
                     </div>
                     <div className="space-y-2">
@@ -415,7 +417,7 @@ function AllTabContent({ results, currentData, query, currentPage, navigate, set
                                 }}
                                 className="flex items-center gap-3 w-full text-left bg-white/5 hover:bg-white/10 px-4 py-3 rounded-xl transition-all border border-transparent hover:border-white/10 group"
                             >
-                                <Search className="w-4 h-4 text-slate-500 group-hover:text-indigo-400 transition-colors shrink-0" />
+                                <Search className="w-4 h-4 text-slate-500 group-hover:text-primary-400 transition-colors shrink-0" />
                                 <span className="text-sm text-slate-300 group-hover:text-white transition-colors">{item}</span>
                             </button>
                         ))}
@@ -483,7 +485,7 @@ function ImagesTabContent({ currentData }: { currentData: any[] }) {
                             initial={{ scale: 0.95, opacity: 0, y: 20 }}
                             animate={{ scale: 1, opacity: 1, y: 0 }}
                             exit={{ scale: 0.95, opacity: 0, y: 20 }}
-                            className="w-full max-w-6xl glass-card rounded-3xl overflow-hidden shadow-2xl shadow-indigo-500/10 flex flex-col md:flex-row max-h-full"
+                            className="w-full max-w-6xl glass-card rounded-3xl overflow-hidden shadow-2xl shadow-primary-500/10 flex flex-col md:flex-row max-h-full"
                             onClick={(e) => e.stopPropagation()}
                         >
                             {/* Image Canvas */}
@@ -500,7 +502,7 @@ function ImagesTabContent({ currentData }: { currentData: any[] }) {
                                 <div className="flex items-start justify-between mb-6">
                                     <div>
                                         <h3 className="text-lg text-white font-medium mb-2">{selectedImage.alt_text || 'Image Details'}</h3>
-                                        <a href={selectedImage.parent_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm text-indigo-400 hover:text-indigo-300 transition-colors">
+                                        <a href={selectedImage.parent_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm text-primary-400 hover:text-primary-300 transition-colors">
                                             <Globe className="w-4 h-4" />
                                             {selectedImage.parent_url ? new URL(selectedImage.parent_url).hostname : 'Source Link'}
                                         </a>
@@ -518,7 +520,7 @@ function ImagesTabContent({ currentData }: { currentData: any[] }) {
                                         href={selectedImage.parent_url || selectedImage.url}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-xl transition-colors flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/20"
+                                        className="w-full py-3 bg-primary-600 hover:bg-primary-500 text-white text-sm font-medium rounded-xl transition-colors flex items-center justify-center gap-2 shadow-lg shadow-primary-600/20"
                                     >
                                         Visit Source Node <ExternalLink className="w-4 h-4" />
                                     </a>
@@ -548,10 +550,10 @@ function VideosTabContent({ currentData }: { currentData: any[] }) {
                 >
                     <a href={vid.url} target="_blank" rel="noopener noreferrer" className="flex flex-col sm:flex-row gap-5">
                         {/* Futuristic Thumbnail */}
-                        <div className="relative w-full sm:w-[280px] aspect-video rounded-xl overflow-hidden bg-black flex-shrink-0 border border-white/10 group-hover:border-indigo-500/50 transition-colors">
+                        <div className="relative w-full sm:w-[280px] aspect-video rounded-xl overflow-hidden bg-black flex-shrink-0 border border-white/10 group-hover:border-primary-500/50 transition-colors">
                             <img src={vid.thumbnail} alt="" className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity duration-500 group-hover:scale-105" />
                             <div className="absolute inset-0 flex items-center justify-center">
-                                <div className="w-14 h-14 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center group-hover:bg-indigo-500/50 group-hover:border-indigo-400 group-hover:scale-110 transition-all duration-300 shadow-xl">
+                                <div className="w-14 h-14 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center group-hover:bg-primary-500/50 group-hover:border-primary-400 group-hover:scale-110 transition-all duration-300 shadow-xl">
                                     <PlayCircle className="w-7 h-7 text-white fill-white/80 group-hover:fill-white" />
                                 </div>
                             </div>
@@ -565,7 +567,7 @@ function VideosTabContent({ currentData }: { currentData: any[] }) {
                             <div className="flex items-center gap-2 mb-2">
                                 <span className="px-2 py-0.5 rounded text-xs font-medium text-rose-300 bg-rose-500/10 border border-rose-500/20">Media Node</span>
                             </div>
-                            <h3 className="text-lg text-white font-medium leading-snug line-clamp-2 mb-2 group-hover:text-indigo-300 transition-colors">
+                            <h3 className="text-lg text-white font-medium leading-snug line-clamp-2 mb-2 group-hover:text-primary-300 transition-colors">
                                 {vid.title}
                             </h3>
                             <p className="text-sm text-slate-400 line-clamp-2 font-light">
@@ -607,7 +609,7 @@ function NewsTabContent({ currentData }: { currentData: any[] }) {
                                     {news.time}
                                 </span>
                             </div>
-                            <h3 className="text-xl text-indigo-300 font-medium leading-tight mb-2 group-hover:text-indigo-200 transition-colors result-link-hover">
+                            <h3 className="text-xl text-primary-300 font-medium leading-tight mb-2 group-hover:text-primary-200 transition-colors result-link-hover">
                                 {news.title}
                             </h3>
                             <p className="text-[15px] text-slate-400 line-clamp-2 font-light leading-relaxed">
@@ -617,7 +619,7 @@ function NewsTabContent({ currentData }: { currentData: any[] }) {
 
                         {/* Thumbnail */}
                         {news.thumbnail && (
-                            <div className="w-full sm:w-[160px] h-[120px] rounded-xl overflow-hidden bg-white/5 shrink-0 border border-white/5 group-hover:border-indigo-500/30 transition-colors">
+                            <div className="w-full sm:w-[160px] h-[120px] rounded-xl overflow-hidden bg-white/5 shrink-0 border border-white/5 group-hover:border-primary-500/30 transition-colors">
                                 <img src={news.thumbnail} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                             </div>
                         )}
@@ -636,7 +638,7 @@ function KnowledgePanel({ data, query }: { data: any; query: string }) {
         <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="glass-card rounded-2xl overflow-hidden shadow-2xl shadow-indigo-500/5 border border-indigo-500/20"
+            className="glass-card rounded-2xl overflow-hidden shadow-2xl shadow-primary-500/5 border border-primary-500/20"
         >
             {/* Image Header */}
             {data.image && (
@@ -648,14 +650,14 @@ function KnowledgePanel({ data, query }: { data: any; query: string }) {
 
             <div className="p-6 relative">
                 {/* Float tag */}
-                <span className="absolute top-[-14px] right-6 bg-indigo-500 text-white text-[10px] uppercase font-bold tracking-widest px-3 py-1 rounded-full shadow-lg">
+                <span className="absolute top-[-14px] right-6 bg-primary-500 text-white text-[10px] uppercase font-bold tracking-widest px-3 py-1 rounded-full shadow-lg">
                     Verified Schema
                 </span>
 
                 <h2 className="text-3xl font-display font-semibold text-white mb-2 tracking-tight">
                     {data.title || query}
                 </h2>
-                <div className="flex items-center gap-2 mb-4 text-xs font-medium text-indigo-300 bg-indigo-500/10 inline-flex px-2 py-1 rounded border border-indigo-500/20">
+                <div className="flex items-center gap-2 mb-4 text-xs font-medium text-primary-300 bg-primary-500/10 inline-flex px-2 py-1 rounded border border-primary-500/20">
                     <BookOpen className="w-3.5 h-3.5" />
                     <span>Entity Profile</span>
                 </div>
@@ -692,7 +694,7 @@ function GooglePagination({ currentPage, totalPages, onPageChange }: any) {
                 {currentPage > 1 && (
                     <button
                         onClick={() => onPageChange(currentPage - 1)}
-                        className="glass-panel w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/10 hover:text-indigo-400 transition-colors mr-2"
+                        className="glass-panel w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/10 hover:text-primary-400 transition-colors mr-2"
                     >
                         <ChevronLeft className="w-5 h-5" />
                     </button>
@@ -704,7 +706,7 @@ function GooglePagination({ currentPage, totalPages, onPageChange }: any) {
                         onClick={() => onPageChange(p)}
                         className={`w-10 h-10 flex items-center justify-center text-[14px] transition-all rounded-full font-medium
                             ${currentPage === p
-                                ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/30 border border-indigo-400'
+                                ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/30 border border-primary-400'
                                 : 'glass-panel text-slate-400 hover:text-white hover:bg-white/10'
                             }`}
                     >
@@ -715,7 +717,7 @@ function GooglePagination({ currentPage, totalPages, onPageChange }: any) {
                 {currentPage < totalPages && (
                     <button
                         onClick={() => onPageChange(currentPage + 1)}
-                        className="glass-panel w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/10 hover:text-indigo-400 transition-colors ml-2"
+                        className="glass-panel w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/10 hover:text-primary-400 transition-colors ml-2"
                     >
                         <ChevronRight className="w-5 h-5" />
                     </button>

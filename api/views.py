@@ -202,6 +202,53 @@ class SearchAPIView(APIView):
         
         return None
 
+    def _get_brave_results(self, query, limit=10):
+        """Fallback web search via Brave Search HTML when Google CSE is unavailable/quota exceeded"""
+        results = []
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Accept-Language': 'en-US,en;q=0.9',
+            'Accept': 'text/html',
+        }
+        try:
+            from urllib.parse import quote_plus
+            from bs4 import BeautifulSoup
+            search_url = f"https://search.brave.com/search?q={quote_plus(query)}&source=web"
+            response = requests.get(search_url, headers=headers, timeout=10)
+            if response.status_code == 200:
+                soup = BeautifulSoup(response.text, 'html.parser')
+                snippets = soup.select('.snippet')
+                for s in snippets:
+                    link = s.select_one('a[href]')
+                    if not link:
+                        continue
+                    url = link.get('href', '')
+                    if not url.startswith('http'):
+                        continue
+                    # Extract title - look for the first meaningful text link
+                    title_tag = s.find('span', class_=lambda c: c and 'title' in c) or link
+                    title = title_tag.get_text(strip=True) if title_tag else ''
+                    # Extract snippet text
+                    desc_tag = s.find('p') or s.find('span', class_=lambda c: c and 'desc' in (c or ''))
+                    snippet = desc_tag.get_text(strip=True) if desc_tag else ''
+                    # Extract display URL  
+                    display = url.split('//')[-1].split('/')[0] if url else ''
+                    if url and title and len(title) > 5:
+                        results.append({
+                            'title': title,
+                            'url': url,
+                            'displayUrl': display,
+                            'snippet': snippet,
+                            'thumbnail': None,
+                            'favicon': None,
+                            'source': 'brave',
+                        })
+                    if len(results) >= limit:
+                        break
+        except Exception as e:
+            logger.error(f"Brave search fallback failed: {e}")
+        return results
+
     def _search_all(self, qs, words, page, limit, discovery_results=[], original_query=""):
         from crawler.pipelines import NewsPipeline, VideoPipeline, ImagePipeline
         from concurrent.futures import ThreadPoolExecutor
@@ -234,6 +281,16 @@ class SearchAPIView(APIView):
                 google_results, google_total = future_google.result(timeout=10)
             except Exception:
                 print("Google web search timeout")
+            
+            # --- Brave Search FALLBACK if Google returned nothing ---
+            if not google_results:
+                print(f"⚠️ Google returned 0 results (quota/error). Falling back to Brave for: {pipe_query}")
+                try:
+                    google_results = self._get_brave_results(pipe_query, limit)
+                    google_total = len(google_results) * 5  # estimate
+                except Exception as e:
+                    logger.error(f"Brave fallback error: {e}")
+
             
             if page == 1:
                 try:
@@ -311,6 +368,10 @@ class SearchAPIView(APIView):
             if results_page:
                 for page_obj in results_page:
                     if page_obj.url not in google_urls:
+                        # Only include local results with meaningful relevance
+                        rel = getattr(page_obj, 'relevance', 0) or 0
+                        if rel < 0.5:  # skip very low-relevance local DB entries
+                            continue
                         page_imgs = list(page_obj.images.values('url', 'alt_text')[:1])
                         if page == 1 and len(global_images) < 20:
                             global_images.extend(page_imgs)
@@ -344,35 +405,22 @@ class SearchAPIView(APIView):
         """Dedicated Image Search Vertical"""
         from crawler.pipelines import ImagePipeline
         pipe_query = original_query or ' '.join(words)
+        pipeline = ImagePipeline()
         
-        # 1. Primary: Platinum results from Google Search API
-        platinum_images = ImagePipeline().search(pipe_query)
+        # 1. Primary: Google Image Search API (via pipeline)
+        platinum_images = pipeline.search(pipe_query)
         
-        # 2. Local: Crawled images from DB
-        local_images = []
-        local_qs = (
-            qs.filter(images__isnull=False)
-            .annotate(relevance=Sum('index_entries__weight', filter=Q(index_entries__word__in=words)))
-            .order_by('-relevance')
-        )
-        
-        p_limit = 10
-        local_paginator = Paginator(local_qs, p_limit)
-        try:
-            p_chunk = local_paginator.page(1)
-            for p in p_chunk:
-                for img in p.images.all()[:3]:
-                    local_images.append({
-                        'url': img.url,
-                        'alt_text': img.alt_text or p.title,
-                        'thumbnail': img.url,
-                        'parent_url': p.url,
-                        'parent_title': p.title,
-                    })
-        except:
-            pass
+        # 2. If Google returned too few, use Bing image search directly
+        if len(platinum_images) < 10:
+            logger.warning(f"Google images returned only {len(platinum_images)}, using Bing fallback")
+            bing_images = pipeline._bing_image_search(pipe_query, limit=40)
+            seen_urls = {i['url'] for i in platinum_images}
+            for bi in bing_images:
+                if bi['url'] not in seen_urls:
+                    platinum_images.append(bi)
+                    seen_urls.add(bi['url'])
 
-        # Merge (Platinum Priority)
+        # Build final list from platinum/bing results ONLY (skip irrelevant local DB)
         final_images = []
         seen = set()
         
@@ -380,19 +428,14 @@ class SearchAPIView(APIView):
             if p_img['url'] not in seen:
                 final_images.append({
                     'url': p_img['url'],
-                    'alt_text': p_img.get('title', ''),
+                    'alt_text': p_img.get('title', pipe_query),
                     'thumbnail': p_img.get('thumbnail') or p_img['url'],
                     'parent_url': p_img.get('context', ''),
                     'parent_title': p_img.get('title', ''),
-                    'width': 0,
-                    'height': 0,
+                    'width': p_img.get('width', 0),
+                    'height': p_img.get('height', 0),
                 })
                 seen.add(p_img['url'])
-
-        for l_img in local_images:
-            if l_img['url'] not in seen:
-                final_images.append(l_img)
-                seen.add(l_img['url'])
 
         # Manual Pagination
         total = len(final_images)
@@ -409,6 +452,7 @@ class SearchAPIView(APIView):
             'count': total,
             'next': end < total
         }
+
 
     def _search_news(self, qs, words, page, limit, original_query=""):
         """Dedicated News Tab Search"""
