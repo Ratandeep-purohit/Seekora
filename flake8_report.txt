@@ -1,0 +1,80 @@
+﻿.\.venv\Lib\site-packages\PIL\EpsImagePlugin.py:76:5: F824 `global gs_binary` is unused: name is never assigned in scope
+.\.venv\Lib\site-packages\attr\_make.py:1436:9: F824 `nonlocal hash` is unused: name is never assigned in scope
+.\.venv\Lib\site-packages\attr\_next_gen.py:398:9: F824 `nonlocal frozen` is unused: name is never assigned in scope
+.\.venv\Lib\site-packages\bs4\builder\__init__.py:263:47: F821 undefined name 'bs4'
+.\.venv\Lib\site-packages\bs4\builder\__init__.py:602:47: F821 undefined name 'bs4'
+.\.venv\Lib\site-packages\bs4\formatter.py:171:20: F821 undefined name 'bs4'
+.\.venv\Lib\site-packages\colorama\tests\ansitowin32_test.py:45:51: F841 local variable 'excinfo' is assigned to but never used
+.\.venv\Lib\site-packages\colorama\win32.py:121:9: F841 local variable 'success' is assigned to but never used
+.\.venv\Lib\site-packages\colorama\win32.py:153:9: F841 local variable 'success' is assigned to but never used
+.\.venv\Lib\site-packages\flake8\checker.py:81:36: F821 undefined name '_mp_plugins'
+.\.venv\Lib\site-packages\flake8\checker.py:81:57: F821 undefined name '_mp_options'
+.\.venv\Lib\site-packages\lxml\html\clean.py:8:5: F405 'clean_html' may be undefined, or defined from star imports: lxml_html_clean
+.\.venv\Lib\site-packages\lxml\html\clean.py:8:5: F405 'clean' may be undefined, or defined from star imports: lxml_html_clean
+.\.venv\Lib\site-packages\lxml\html\clean.py:8:5: F405 'Cleaner' may be undefined, or defined from star imports: lxml_html_clean
+.\.venv\Lib\site-packages\lxml\html\clean.py:8:5: F405 'autolink' may be undefined, or defined from star imports: lxml_html_clean
+.\.venv\Lib\site-packages\lxml\html\clean.py:8:5: F405 'autolink_html' may be undefined, or defined from star imports: lxml_html_clean
+.\.venv\Lib\site-packages\lxml\html\clean.py:8:5: F405 'word_break' may be undefined, or defined from star imports: lxml_html_clean
+.\.venv\Lib\site-packages\lxml\html\clean.py:8:5: F405 'word_break_html' may be undefined, or defined from star imports: lxml_html_clean
+.\.venv\Lib\site-packages\pip\_internal\utils\logging.py:322:5: F824 `global stderr_console` is unused: name is never assigned in scope
+.\.venv\Lib\site-packages\pip\_vendor\distlib\compat.py:21:20: F821 undefined name 'basestring'
+.\.venv\Lib\site-packages\pip\_vendor\distlib\compat.py:22:17: F821 undefined name 'unicode'
+.\.venv\Lib\site-packages\pip\_vendor\distlib\compat.py:31:26: F821 undefined name 'unicode'
+.\.venv\Lib\site-packages\pip\_vendor\distlib\compat.py:46:17: F821 undefined name 'raw_input'
+.\.venv\Lib\site-packages\pip\_vendor\distlib\compat.py:504:37: F821 undefined name 'get_ident'
+.\.venv\Lib\site-packages\pip\_vendor\pygments\lexer.py:229:27: F821 undefined name 'chardet'
+.\.venv\Lib\site-packages\pip\_vendor\rich\console.py:517:15: F821 undefined name 'get_ipython'
+.\.venv\Lib\site-packages\pip\_vendor\rich\logging.py:286:9: F841 local variable 'foos' is assigned to but never used
+.\.venv\Lib\site-packages\pip\_vendor\rich\traceback.py:204:14: F821 undefined name 'get_ipython'
+.\.venv\Lib\site-packages\pip\_vendor\rich\traceback.py:884:9: F841 local variable '_rich_traceback_guard' is assigned to but never used
+.\.venv\Lib\site-packages\pip\_vendor\rich\traceback.py:885:9: F841 local variable 'zed' is assigned to but never used
+.\.venv\Lib\site-packages\pip\_vendor\urllib3\packages\six.py:49:21: F821 undefined name 'basestring'
+.\.venv\Lib\site-packages\pip\_vendor\urllib3\packages\six.py:50:27: F821 undefined name 'long'
+.\.venv\Lib\site-packages\pip\_vendor\urllib3\packages\six.py:52:17: F821 undefined name 'unicode'
+.\.venv\Lib\site-packages\pip\_vendor\urllib3\packages\six.py:722:16: F821 undefined name 'unicode'
+.\.venv\Lib\site-packages\pip\_vendor\urllib3\packages\six.py:824:37: F821 undefined name 'basestring'
+.\.venv\Lib\site-packages\pip\_vendor\urllib3\packages\six.py:828:32: F821 undefined name 'file'
+.\.venv\Lib\site-packages\pip\_vendor\urllib3\packages\six.py:829:38: F821 undefined name 'unicode'
+.\.venv\Lib\site-packages\pip\_vendor\urllib3\packages\six.py:841:32: F821 undefined name 'unicode'
+.\.venv\Lib\site-packages\pip\_vendor\urllib3\packages\six.py:847:32: F821 undefined name 'unicode'
+.\.venv\Lib\site-packages\pip\_vendor\urllib3\packages\six.py:855:36: F821 undefined name 'unicode'
+.\.venv\Lib\site-packages\pip\_vendor\urllib3\packages\six.py:859:23: F821 undefined name 'unicode'
+.\.venv\Lib\site-packages\pip\_vendor\urllib3\packages\six.py:860:21: F821 undefined name 'unicode'
+.\.venv\Lib\site-packages\typing_extensions.py:21:1: F822 undefined name 'AbstractSet' in __all__
+.\.venv\Lib\site-packages\typing_extensions.py:21:1: F822 undefined name 'AnyStr' in __all__
+.\.venv\Lib\site-packages\typing_extensions.py:21:1: F822 undefined name 'BinaryIO' in __all__
+.\.venv\Lib\site-packages\typing_extensions.py:21:1: F822 undefined name 'Callable' in __all__
+.\.venv\Lib\site-packages\typing_extensions.py:21:1: F822 undefined name 'Collection' in __all__
+.\.venv\Lib\site-packages\typing_extensions.py:21:1: F822 undefined name 'Container' in __all__
+.\.venv\Lib\site-packages\typing_extensions.py:21:1: F822 undefined name 'Dict' in __all__
+.\.venv\Lib\site-packages\typing_extensions.py:21:1: F822 undefined name 'FrozenSet' in __all__
+.\.venv\Lib\site-packages\typing_extensions.py:21:1: F822 undefined name 'Hashable' in __all__
+.\.venv\Lib\site-packages\typing_extensions.py:21:1: F822 undefined name 'IO' in __all__
+.\.venv\Lib\site-packages\typing_extensions.py:21:1: F822 undefined name 'ItemsView' in __all__
+.\.venv\Lib\site-packages\typing_extensions.py:21:1: F822 undefined name 'Iterable' in __all__
+.\.venv\Lib\site-packages\typing_extensions.py:21:1: F822 undefined name 'Iterator' in __all__
+.\.venv\Lib\site-packages\typing_extensions.py:21:1: F822 undefined name 'KeysView' in __all__
+.\.venv\Lib\site-packages\typing_extensions.py:21:1: F822 undefined name 'List' in __all__
+.\.venv\Lib\site-packages\typing_extensions.py:21:1: F822 undefined name 'Mapping' in __all__
+.\.venv\Lib\site-packages\typing_extensions.py:21:1: F822 undefined name 'MappingView' in __all__
+.\.venv\Lib\site-packages\typing_extensions.py:21:1: F822 undefined name 'Match' in __all__
+.\.venv\Lib\site-packages\typing_extensions.py:21:1: F822 undefined name 'MutableMapping' in __all__
+.\.venv\Lib\site-packages\typing_extensions.py:21:1: F822 undefined name 'MutableSequence' in __all__
+.\.venv\Lib\site-packages\typing_extensions.py:21:1: F822 undefined name 'MutableSet' in __all__
+.\.venv\Lib\site-packages\typing_extensions.py:21:1: F822 undefined name 'Optional' in __all__
+.\.venv\Lib\site-packages\typing_extensions.py:21:1: F822 undefined name 'Pattern' in __all__
+.\.venv\Lib\site-packages\typing_extensions.py:21:1: F822 undefined name 'Reversible' in __all__
+.\.venv\Lib\site-packages\typing_extensions.py:21:1: F822 undefined name 'Sequence' in __all__
+.\.venv\Lib\site-packages\typing_extensions.py:21:1: F822 undefined name 'Set' in __all__
+.\.venv\Lib\site-packages\typing_extensions.py:21:1: F822 undefined name 'Sized' in __all__
+.\.venv\Lib\site-packages\typing_extensions.py:21:1: F822 undefined name 'TextIO' in __all__
+.\.venv\Lib\site-packages\typing_extensions.py:21:1: F822 undefined name 'Tuple' in __all__
+.\.venv\Lib\site-packages\typing_extensions.py:21:1: F822 undefined name 'Union' in __all__
+.\.venv\Lib\site-packages\typing_extensions.py:21:1: F822 undefined name 'ValuesView' in __all__
+.\.venv\Lib\site-packages\typing_extensions.py:21:1: F822 undefined name 'cast' in __all__
+.\.venv\Lib\site-packages\typing_extensions.py:21:1: F822 undefined name 'no_type_check' in __all__
+.\.venv\Lib\site-packages\typing_extensions.py:21:1: F822 undefined name 'no_type_check_decorator' in __all__
+.\api\views.py:177:17: F841 local variable 'spelling' is assigned to but never used
+.\crawler\crawler_engine.py:72:9: F841 local variable 'query_slug' is assigned to but never used
+.\crawler\pipelines.py:355:16: F821 undefined name 'e'
+.\make_ppt.py:73:5: F841 local variable 'avail_h' is assigned to but never used

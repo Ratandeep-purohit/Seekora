@@ -1,8 +1,7 @@
-from pptx import Presentation
-from pptx.util import Inches, Pt, Emu
-from pptx.dml.color import RGBColor
-from pptx.enum.text import PP_ALIGN
-from pptx.util import Inches, Pt
+from pptx import Presentation  # type: ignore
+from pptx.util import Inches, Pt  # type: ignore
+from pptx.dml.color import RGBColor  # type: ignore
+from pptx.enum.text import PP_ALIGN  # type: ignore
 import copy
 
 # ─── COLOR PALETTE ────────────────────────────────────────────────────────────

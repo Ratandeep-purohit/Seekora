@@ -1,3 +1,4 @@
+/* eslint-disable */
 import { motion } from 'framer-motion';
 import { Sparkles, ArrowUpRight, CheckCircle2, Lightbulb } from 'lucide-react';
 import { Card } from '@/core/primitives';

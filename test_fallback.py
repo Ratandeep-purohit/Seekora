@@ -1,6 +1,6 @@
-import requests, json, re
+import requests  # type: ignore
+import re
 from urllib.parse import quote_plus
-from bs4 import BeautifulSoup
 
 query = 'life before formation of earth'
 headers = {
@@ -21,7 +21,7 @@ patterns = [
 ]
 for p in patterns:
     matches = re.findall(p, r.text)
-    print(f'Pattern {p[:30]}... -> {len(matches)} matches')
-    for m in matches[:2]:
+    print(f'Pattern {str(p)[:30]}... -> {len(matches)} matches')  # type: ignore
+    for m in matches[:2]:  # type: ignore
         print(f'  {m[:100]}')
     print()

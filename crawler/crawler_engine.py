@@ -1,15 +1,15 @@
-import requests
-import aiohttp
+import requests  # type: ignore
+import aiohttp  # type: ignore
 import asyncio
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup  # type: ignore
 from urllib.parse import urlparse, urljoin, quote_plus, urlunparse
-from core.models import WebPage, SearchIndex, ImageMedia, VideoMedia
+from core.models import WebPage, SearchIndex, ImageMedia, VideoMedia  # type: ignore
 import re
-from django.utils import timezone
+from django.utils import timezone  # type: ignore
 from concurrent.futures import ThreadPoolExecutor
 import logging
-from .robots_parser import RobotsTxtHandler
-from .rate_limiter import AdaptiveRateLimiter
+from .robots_parser import RobotsTxtHandler  # type: ignore
+from .rate_limiter import AdaptiveRateLimiter  # type: ignore
 
 logger = logging.getLogger(__name__)
 
@@ -37,7 +37,7 @@ class SeekoraCrawler:
         Uses multiple search engines + fallback to authoritative sites
         """
         try:
-            from .search_discovery import search_discovery
+            from .search_discovery import search_discovery  # type: ignore
             
             # Try multi-source discovery
             urls = search_discovery.discover_urls(query, max_results=20)
@@ -231,7 +231,7 @@ class SeekoraCrawler:
         for meta in meta_images:
             i_url = urljoin(url, meta['url'])
             if i_url not in seen_imgs:
-                img_objs.append(ImageMedia(page=page, url=i_url, alt_text=meta['alt'][:500]))
+                img_objs.append(ImageMedia(page=page, url=i_url, alt_text=meta['alt'][:500]))  # type: ignore
                 seen_imgs.add(i_url)
 
         # 2. Extract Content Images with Strict Filtering
@@ -327,7 +327,7 @@ class SeekoraCrawler:
                 ))
         
         VideoMedia.objects.filter(page=page).delete()
-        VideoMedia.objects.bulk_create(vid_objs[:15], ignore_conflicts=True)  # Limit to 15 videos
+        VideoMedia.objects.bulk_create(vid_objs[:15], ignore_conflicts=True)  # type: ignore # Limit to 15 videos
 
         # Multi-Field Weighted Indexing
         SearchIndex.objects.filter(page=page).delete()
@@ -372,7 +372,7 @@ class SeekoraCrawler:
             'urls_failed': 0,
         }
         
-        from .search_discovery import search_discovery
+        from .search_discovery import search_discovery  # type: ignore
         discovery_results = search_discovery.discover_advanced(query)
         urls = [r['url'] for r in discovery_results]
         

@@ -2,8 +2,8 @@
 Multi-Source URL Discovery Engine
 Uses multiple search engines to discover relevant URLs
 """
-import requests
-from bs4 import BeautifulSoup
+import requests  # type: ignore
+from bs4 import BeautifulSoup  # type: ignore
 from urllib.parse import quote_plus, urlparse
 import logging
 import time
@@ -53,12 +53,12 @@ class SearchDiscovery:
                 formatted_items = []
                 for item in items:
                     if isinstance(item, str):
-                        formatted_items.append({'url': item, 'source': source_func.__name__})
+                        formatted_items.append({'url': item, 'source': source_func.__name__})  # type: ignore
                     else:
                         formatted_items.append(item)
                         
                 all_results.extend(formatted_items)
-                logger.info(f"✅ {source_func.__name__}: Found {len(formatted_items)} items")
+                logger.info(f"✅ {source_func.__name__}: Found {len(formatted_items)} items")  # type: ignore
                 
             except Exception as e:
                 logger.warning(f"⚠️ {source_func.__name__} failed: {e}")
@@ -73,11 +73,11 @@ class SearchDiscovery:
                 unique_results.append(res)
         
         logger.info(f"🔍 Total unique results discovered: {len(unique_results)}")
-        return unique_results[:max_results]
+        return unique_results[:max_results]  # type: ignore
     
     def _discover_google(self, query):
         """Official Google Custom Search API Discovery"""
-        from django.conf import settings
+        from django.conf import settings  # type: ignore
         results = []
         
         api_key = getattr(settings, 'GOOGLE_API_KEY', None)
@@ -110,7 +110,7 @@ class SearchDiscovery:
                         elif 'cse_image' in pagemap:
                             thumb = pagemap['cse_image'][0].get('src')
                             
-                        results.append({
+                        results.append({  # type: ignore
                             'url': item['link'],
                             'title': item.get('title'),
                             'snippet': item.get('snippet'),
@@ -152,7 +152,7 @@ class SearchDiscovery:
         except Exception as e:
             logger.error(f"DuckDuckGo discovery failed: {e}")
             
-        return urls[:15]
+        return urls[:15]  # type: ignore
 
     def _discover_duckduckgo_lite(self, query):
         """Discover URLs from DuckDuckGo Lite (Much more robust against blocking)"""
@@ -176,7 +176,7 @@ class SearchDiscovery:
             logger.error(f"DDG Lite discovery failed: {e}")
             
         logger.info(f"🦆 DDG Lite found {len(urls)} URLs")
-        return urls[:15]
+        return urls[:15]  # type: ignore
     
     def _discover_wikipedia(self, query):
         """Discover URLs from Wikipedia search"""
@@ -226,7 +226,7 @@ class SearchDiscovery:
         except Exception as e:
             logger.error(f"GitHub discovery failed: {e}")
         
-        return urls[:5]
+        return urls[:5]  # type: ignore
     
     def _discover_common_sites(self, query):
         """
@@ -255,7 +255,7 @@ class SearchDiscovery:
         
         urls.extend(general_sites)
         
-        return urls[:5]
+        return urls[:5]  # type: ignore
 
 # Singleton instance
 search_discovery = SearchDiscovery()

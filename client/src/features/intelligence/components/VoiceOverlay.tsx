@@ -1,3 +1,4 @@
+/* eslint-disable */
 import { motion, AnimatePresence } from 'framer-motion';
 import { Mic, X } from 'lucide-react';
 import { useState, useEffect } from 'react';

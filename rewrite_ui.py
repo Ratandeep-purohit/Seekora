@@ -1,5 +1,4 @@
-import os
-import re
+
 
 files = [
     'client/src/features/search/pages/HomePage.tsx',

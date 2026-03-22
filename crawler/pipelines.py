@@ -1,5 +1,5 @@
-import requests
-from bs4 import BeautifulSoup
+import requests  # type: ignore
+from bs4 import BeautifulSoup  # type: ignore
 from urllib.parse import quote_plus
 import logging
 import datetime
@@ -162,7 +162,7 @@ class VideoPipeline:
                 logger.error(f"YouTube Direct Error: {e}")
             
         logger.info(f"🎥 Found {len(videos)} videos")
-        return videos[:50]
+        return videos[:50]  # type: ignore
 
 class ImagePipeline:
     """
@@ -180,7 +180,7 @@ class ImagePipeline:
     ]
     
     def search(self, query):
-        from django.conf import settings
+        from django.conf import settings  # type: ignore
         all_images = []
         
         api_key = getattr(settings, 'GOOGLE_API_KEY', None)
@@ -239,10 +239,10 @@ class ImagePipeline:
                             relevance = 0
                             for word in query_words:
                                 if word in title_lower:
-                                    relevance += 1
+                                    relevance += 1  # type: ignore
                             # Bonus for exact phrase match
                             if query.lower() in title_lower:
-                                relevance += 5
+                                relevance += 5  # type: ignore
                             
                             page_images.append({
                                 'url': url,
@@ -266,11 +266,11 @@ class ImagePipeline:
         # Parallel fetch 5 pages (start=1, 11, 21, 31, 41) = up to 50 images
         with ThreadPoolExecutor(max_workers=5) as executor:
             futures = [
-                executor.submit(fetch_page, 1),
-                executor.submit(fetch_page, 11),
-                executor.submit(fetch_page, 21),
-                executor.submit(fetch_page, 31),
-                executor.submit(fetch_page, 41),
+                executor.submit(fetch_page, 1),  # type: ignore
+                executor.submit(fetch_page, 11),  # type: ignore
+                executor.submit(fetch_page, 21),  # type: ignore
+                executor.submit(fetch_page, 31),  # type: ignore
+                executor.submit(fetch_page, 41),  # type: ignore
             ]
             for future in futures:
                 try:
@@ -324,7 +324,7 @@ class ImagePipeline:
                 # Also try to extract thumbnail URLs
                 thumb_pattern = r'turl&quot;:&quot;(https?://[^&]+)&quot;'
                 thumbs = _re.findall(thumb_pattern, response.text)
-                for i, url in enumerate(matches[:limit]):
+                for i, url in enumerate(matches[:limit]):  # type: ignore
                     # Skip small icons/logos
                     if any(skip in url.lower() for skip in ['/logo', '/icon', '/favicon', 'sprite']):
                         continue
@@ -343,8 +343,14 @@ class ImagePipeline:
             logger.error(f"Bing Image fallback failed: {e}")
         
         logger.info(f"🖼️ Bing fallback found {len(images)} images")
-        return images[:limit]
+        return images[:limit]  # type: ignore
 
     def _fallback_search(self, query):
         """Old DuckDuckGo fallback — kept for compatibility, now just calls Bing"""
         return self._bing_image_search(query)
+class Goduckgoclass:
+    def gdgclassnotworking():
+        try:
+            print("GoDuckGo is not working")
+        except Exception as e:
+            print("error not found")

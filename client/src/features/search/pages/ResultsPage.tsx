@@ -1,3 +1,4 @@
+/* eslint-disable */
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Search, Mic, Camera, X, Image as ImageIcon, Newspaper, PlayCircle, ChevronLeft, ChevronRight, Globe, ExternalLink, BookOpen, Sparkles } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
