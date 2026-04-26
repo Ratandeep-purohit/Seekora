@@ -38,7 +38,7 @@ export function QuickAnswer({ query }: { query: string }) {
     if (!data) return (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mb-8">
             <Card className="p-6 border-slate-700/50 bg-slate-800/20 backdrop-blur-sm">
-                <div className="flex items-center gap-3 text-slate-400">
+                <div className="flex items-center gap-3 text-[var(--color-text-secondary)]">
                     <Sparkles className="w-5 h-5 text-indigo-400 animate-pulse" />
                     <span className="text-sm font-medium italic">Seekora Neural Engine is synthesizing a real-time overview for your query...</span>
                 </div>
@@ -65,12 +65,12 @@ export function QuickAnswer({ query }: { query: string }) {
                             </span>
                         </div>
 
-                        <h2 className="text-2xl font-bold text-white mb-4">
+                        <h2 className="text-2xl font-bold text-[var(--color-text-primary)] mb-4">
                             {data.title}
                         </h2>
 
                         <div
-                            className="text-slate-300 leading-relaxed mb-6"
+                            className="text-[var(--color-text-secondary)] leading-relaxed mb-6"
                             dangerouslySetInnerHTML={{ __html: data.overview }}
                         />
 
@@ -90,7 +90,7 @@ export function QuickAnswer({ query }: { query: string }) {
                                         <div key={i} className="w-6 h-6 rounded-full bg-slate-700 border-2 border-slate-900" />
                                     ))}
                                 </div>
-                                <span className="text-xs text-slate-500 ml-2 italic">Verified by {data.sources} experts & citations</span>
+                                <span className="text-xs text-[var(--color-text-tertiary)] ml-2 italic">Verified by {data.sources} experts & citations</span>
                             </div>
                             <button className="text-indigo-400 hover:text-indigo-300 text-sm font-semibold flex items-center gap-1 transition-colors">
                                 Explore Knowledge Graph <ArrowUpRight className="w-4 h-4" />

@@ -36,9 +36,9 @@ interface ButtonProps {
 
 export function Button({ children, variant = 'primary', className, onClick }: ButtonProps) {
     const variants = {
-        primary: "bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-500/20",
-        secondary: "bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700",
-        ghost: "bg-transparent hover:bg-slate-800 text-slate-400 hover:text-white"
+        primary: "bg-indigo-600 hover:bg-indigo-500 text-[var(--color-text-primary)] shadow-lg shadow-indigo-500/20",
+        secondary: "bg-slate-800 hover:bg-slate-700 text-[var(--color-text-primary)] border border-slate-700",
+        ghost: "bg-transparent hover:bg-slate-800 text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
     };
 
     return (

@@ -225,12 +225,12 @@ class SearchAPIView(APIView):
                     url = link.get('href', '')
                     if not url.startswith('http'):
                         continue
-                    # Extract title - look for the first meaningful text link
-                    title_tag = s.find('span', class_=lambda c: c and 'title' in c) or link
-                    title = title_tag.get_text(strip=True) if title_tag else ''
+                    # Extract title
+                    title_tag = s.select_one('.title')
+                    title = title_tag.get_text(strip=True) if title_tag else link.get_text(" ", strip=True)
                     # Extract snippet text
-                    desc_tag = s.find('p') or s.find('span', class_=lambda c: c and 'desc' in (c or ''))
-                    snippet = desc_tag.get_text(strip=True) if desc_tag else ''
+                    desc_tag = s.select_one('.content') or s.select_one('.description') or s.find('p')
+                    snippet = desc_tag.get_text(" ", strip=True) if desc_tag else ''
                     # Extract display URL  
                     display = url.split('//')[-1].split('/')[0] if url else ''
                     if url and title and len(title) > 5:

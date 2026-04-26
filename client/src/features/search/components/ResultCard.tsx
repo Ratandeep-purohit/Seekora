@@ -22,10 +22,10 @@ export function ResultCard({ children, className, url }: ResultCardProps) {
 
 export function ResultHeader({ site, icon: Icon = Globe }: { site: string; icon?: any }) {
     return (
-        <div className="flex items-center justify-between text-xs text-slate-400 font-medium">
+        <div className="flex items-center justify-between text-xs text-[var(--color-text-secondary)] font-medium">
             <div className="flex items-center gap-2">
                 <div className="w-5 h-5 rounded-full bg-slate-700/50 flex items-center justify-center overflow-hidden">
-                    <Icon className="w-3 h-3 text-slate-300" />
+                    <Icon className="w-3 h-3 text-[var(--color-text-secondary)]" />
                 </div>
                 <span className="truncate max-w-[200px]">{site}</span>
             </div>
@@ -50,12 +50,12 @@ export function ResultSnippet({ children, terms = [] }: { children: string; term
     let content = children;
     terms.forEach(term => {
         const regex = new RegExp(`(${term})`, 'gi');
-        content = content.replace(regex, '<span class="text-white font-semibold">$1</span>');
+        content = content.replace(regex, '<span class="text-[var(--color-text-primary)] font-semibold">$1</span>');
     });
 
     return (
         <p
-            className="text-slate-400 text-sm leading-relaxed line-clamp-2"
+            className="text-[var(--color-text-secondary)] text-sm leading-relaxed line-clamp-2"
             dangerouslySetInnerHTML={{ __html: content }}
         />
     );
@@ -79,7 +79,7 @@ export function ResultMedia({ images = [], videos = [] }: { images?: { url: stri
                             <div className="w-0 h-0 border-t-[4px] border-t-transparent border-l-[7px] border-l-white border-b-[4px] border-b-transparent ml-0.5" />
                         </div>
                     </div>
-                    <span className="absolute bottom-1 right-1 px-1 rounded bg-black/60 text-[8px] text-white font-bold uppercase z-10">{vid.provider}</span>
+                    <span className="absolute bottom-1 right-1 px-1 rounded bg-black/60 text-[8px] text-[var(--color-text-primary)] font-bold uppercase z-10">{vid.provider}</span>
                 </div>
             ))}
         </div>
@@ -91,7 +91,7 @@ export function ResultFooter({ tags = [] }: { tags?: string[] }) {
     return (
         <div className="flex flex-wrap gap-2 mt-1">
             {tags.map((tag, i) => (
-                <span key={i} className="px-2 py-0.5 rounded-md bg-slate-800/80 border border-slate-700/50 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                <span key={i} className="px-2 py-0.5 rounded-md bg-slate-800/80 border border-slate-700/50 text-[10px] font-bold text-[var(--color-text-tertiary)] uppercase tracking-wider">
                     {tag}
                 </span>
             ))}

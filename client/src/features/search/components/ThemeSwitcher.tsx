@@ -25,7 +25,7 @@ const THEME_COLORS: Record<string, string> = {
 export default function ThemeSwitcher() {
     const [isOpen, setIsOpen] = useState(false);
     const [dropdownPos, setDropdownPos] = useState({ top: 0, right: 0 });
-    const { theme, setTheme } = useThemeStore();
+    const { theme, setTheme, mode, setMode } = useThemeStore();
     const buttonRef = useRef<HTMLButtonElement>(null);
 
     const updatePosition = () => {
@@ -65,10 +65,10 @@ export default function ThemeSwitcher() {
                 ref={buttonRef}
                 data-theme-btn
                 onClick={toggle}
-                className="p-2 hover:bg-white/10 rounded-full transition-colors flex items-center justify-center group"
+                className="p-2 hover:bg-[var(--color-surface-hover)] rounded-full transition-colors flex items-center justify-center group"
                 title="Settings & Themes"
             >
-                <Settings className="w-5 h-5 text-slate-400 group-hover:text-slate-200 transition-colors" />
+                <Settings className="w-5 h-5 text-[var(--color-text-secondary)] group-hover:text-[var(--color-text-primary)] transition-colors" />
             </button>
 
             {isOpen && createPortal(
@@ -84,20 +84,44 @@ export default function ThemeSwitcher() {
                             top: dropdownPos.top,
                             right: dropdownPos.right,
                             zIndex: 99999,
-                            width: 272,
+                            width: 280,
                         }}
-                        className="glass-panel rounded-2xl shadow-2xl border border-white/10"
+                        className="glass-panel rounded-2xl shadow-2xl border border-[var(--color-border)]"
                     >
                         {/* Header */}
-                        <div className="px-4 py-3 border-b border-white/5">
-                            <h3 className="text-sm font-semibold text-white flex items-center gap-2">
+                        <div className="px-4 py-3 border-b border-[var(--color-border)]">
+                            <h3 className="text-sm font-semibold text-[var(--color-text-primary)] flex items-center gap-2">
                                 <Settings className="w-4 h-4 opacity-70" />
-                                Choose Theme
+                                Theme & Mode
                             </h3>
                         </div>
 
+                        {/* Mode Toggle */}
+                        <div className="p-3 border-b border-[var(--color-border)] flex gap-2">
+                            <button
+                                onClick={() => setMode('light')}
+                                className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-colors border ${
+                                    mode === 'light' 
+                                    ? 'bg-[var(--color-accent)] text-[var(--color-text-primary)] border-[var(--color-accent)]' 
+                                    : 'bg-[var(--color-surface)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] border-transparent hover:border-[var(--color-border)]'
+                                }`}
+                            >
+                                Light
+                            </button>
+                            <button
+                                onClick={() => setMode('dark')}
+                                className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-colors border ${
+                                    mode === 'dark' 
+                                    ? 'bg-[var(--color-accent)] text-[var(--color-text-primary)] border-[var(--color-accent)]' 
+                                    : 'bg-[var(--color-surface)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] border-transparent hover:border-[var(--color-border)]'
+                                }`}
+                            >
+                                Dark
+                            </button>
+                        </div>
+
                         {/* Theme Grid */}
-                        <div className="p-3 grid grid-cols-2 gap-1.5" style={{ maxHeight: 340, overflowY: 'auto' }}>
+                        <div className="p-3 grid grid-cols-2 gap-1.5" style={{ maxHeight: 300, overflowY: 'auto' }}>
                             {THEMES.map((t) => {
                                 const isActive = theme === t;
                                 const swatchColor = THEME_COLORS[t] || '#6366f1';
@@ -106,23 +130,21 @@ export default function ThemeSwitcher() {
                                         key={t}
                                         onClick={() => {
                                             setTheme(t);
-                                            setIsOpen(false);
                                         }}
-                                        className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 w-full text-left
+                                        className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium transition-all w-full text-left
                                             ${isActive
-                                                ? 'bg-white/15 text-white border border-white/20'
-                                                : 'text-slate-300 hover:bg-white/8 border border-transparent hover:border-white/10 hover:text-white'
+                                                ? 'bg-[var(--color-surface-hover)] text-[var(--color-text-primary)] border border-[var(--color-border-hover)]'
+                                                : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-surface)] border border-transparent hover:border-[var(--color-border)] hover:text-[var(--color-text-primary)]'
                                             }`}
                                     >
-                                        {/* Static color swatch - no dynamic CSS vars needed */}
                                         <div
-                                            className="w-4 h-4 rounded-full shrink-0 shadow-md ring-1 ring-white/20"
+                                            className="w-4 h-4 rounded-full shrink-0 shadow-sm ring-1 ring-[var(--color-border)]"
                                             style={{ backgroundColor: swatchColor }}
                                         />
                                         <span className="capitalize">{t}</span>
                                         {isActive && (
                                             <Check
-                                                className="w-3.5 h-3.5 ml-auto shrink-0 text-white/80"
+                                                className="w-3.5 h-3.5 ml-auto shrink-0 text-[var(--color-text-primary)] opacity-80"
                                                 strokeWidth={2.5}
                                             />
                                         )}

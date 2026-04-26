@@ -114,7 +114,7 @@ export default function HomePage() {
     const suggestionList = getSuggestionList();
 
     return (
-        <div className="min-h-screen relative flex flex-col text-slate-200 overflow-hidden font-sans">
+        <div className="min-h-screen relative flex flex-col text-[var(--color-text-primary)] overflow-hidden font-sans">
             {/* Background elements */}
             <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary-600/20 blur-[120px] rounded-full pointer-events-none" />
             <div className="absolute bottom-[-10%] right-[-10%] w-[30%] h-[30%] bg-primary-600/20 blur-[100px] rounded-full pointer-events-none" />
@@ -124,25 +124,25 @@ export default function HomePage() {
                 <div className="flex items-center gap-4">
                     <div className="flex items-center gap-2">
                         <Sparkles className="w-5 h-5 text-primary-400" />
-                        <span className="font-display font-semibold text-lg tracking-wide text-white">Seekora</span>
+                        <span className="font-display font-semibold text-lg tracking-wide text-[var(--color-text-primary)]">Seekora</span>
                     </div>
                     {/* Compact clock beside logo */}
                     <div className="hidden sm:flex items-center gap-2 px-3 py-1 rounded-full glass-panel border border-white/8 text-xs">
                         <Clock className="w-3 h-3 text-primary-400" />
-                        <span className="text-white font-medium tabular-nums">
+                        <span className="text-[var(--color-text-primary)] font-medium tabular-nums">
                             {now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true })}
                         </span>
-                        <span className="text-slate-500">·</span>
-                        <span className="text-slate-400">
+                        <span className="text-[var(--color-text-tertiary)]">·</span>
+                        <span className="text-[var(--color-text-secondary)]">
                             {now.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
                         </span>
                     </div>
                 </div>
                 <div className="flex items-center gap-6 text-sm font-medium">
                     <ThemeSwitcher />
-                    <a href="#" className="text-slate-400 hover:text-white transition-colors">Workspace</a>
-                    <a href="#" className="text-slate-400 hover:text-white transition-colors">Images</a>
-                    <button className="w-8 h-8 rounded-full bg-gradient-to-tr from-primary-500 to-primary-600 flex items-center justify-center text-white shadow-lg shadow-primary-500/30 hover:shadow-primary-500/50 transition-all border border-primary-400/30 font-semibold">
+                    <a href="#" className="text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors">Workspace</a>
+                    <a href="#" className="text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors">Images</a>
+                    <button className="w-8 h-8 rounded-full bg-gradient-to-tr from-primary-500 to-primary-600 flex items-center justify-center text-[var(--color-text-primary)] shadow-lg shadow-primary-500/30 hover:shadow-primary-500/50 transition-all border border-primary-400/30 font-semibold">
                         S
                     </button>
                 </div>
@@ -161,10 +161,10 @@ export default function HomePage() {
                     <div className="inline-block px-4 py-1.5 rounded-full border border-primary-500/30 bg-primary-500/10 text-primary-300 text-xs font-medium tracking-wider mb-6 backdrop-blur-md">
                         NEXT-GEN SEARCH ENGINE
                     </div>
-                    <h1 className="text-6xl md:text-8xl font-display font-bold tracking-tight text-white mb-4">
+                    <h1 className="text-6xl md:text-8xl font-display font-bold tracking-tight text-[var(--color-text-primary)] mb-4">
                         <span className="text-gradient">Seek</span>ora
                     </h1>
-                    <p className="text-slate-400 text-lg md:text-xl font-light max-w-lg mx-auto">
+                    <p className="text-[var(--color-text-secondary)] text-lg md:text-xl font-light max-w-lg mx-auto">
                         Intelligent answers, deep insights, and instant discovery across the entire web.
                     </p>
                 </motion.div>
@@ -194,7 +194,7 @@ export default function HomePage() {
                                 }}
                                 onFocus={() => setShowSuggestions(true)}
                                 onKeyDown={handleKeyDown}
-                                className="flex-1 bg-transparent text-xl text-white outline-none placeholder:text-slate-500 font-light"
+                                className="flex-1 bg-transparent text-xl text-[var(--color-text-primary)] outline-none placeholder:text-[var(--color-text-tertiary)] font-light"
                                 placeholder="What are you looking for..."
                                 autoComplete="off"
                                 autoFocus
@@ -207,19 +207,19 @@ export default function HomePage() {
                                         setLocalQuery('');
                                         inputRef.current?.focus();
                                     }}
-                                    className="p-1 hover:bg-white/10 rounded-full mr-2 transition-colors"
+                                    className="p-1 hover:bg-[var(--color-surface-hover)] rounded-full mr-2 transition-colors"
                                 >
-                                    <X className="w-5 h-5 text-slate-400" />
+                                    <X className="w-5 h-5 text-[var(--color-text-secondary)]" />
                                 </button>
                             )}
 
-                            <div className="h-6 w-px bg-white/10 mx-2"></div>
+                            <div className="h-6 w-px bg-[var(--color-surface-hover)] mx-2"></div>
 
                             <div className="flex items-center gap-1">
-                                <button type="button" className="p-2.5 hover:bg-white/10 rounded-xl transition-colors text-slate-400 hover:text-primary-400 focus:outline-none">
+                                <button type="button" className="p-2.5 hover:bg-[var(--color-surface-hover)] rounded-xl transition-colors text-[var(--color-text-secondary)] hover:text-primary-400 focus:outline-none">
                                     <Mic className="w-5 h-5" />
                                 </button>
-                                <button type="button" className="p-2.5 hover:bg-white/10 rounded-xl transition-colors text-slate-400 hover:text-primary-400 focus:outline-none">
+                                <button type="button" className="p-2.5 hover:bg-[var(--color-surface-hover)] rounded-xl transition-colors text-[var(--color-text-secondary)] hover:text-primary-400 focus:outline-none">
                                     <Camera className="w-5 h-5" />
                                 </button>
                             </div>
@@ -235,7 +235,7 @@ export default function HomePage() {
                                     transition={{ duration: 0.2 }}
                                     className="absolute left-0 right-0 top-full glass-panel border-t-0 rounded-b-2xl shadow-2xl shadow-black/50 overflow-hidden"
                                 >
-                                    <div className="h-px w-[calc(100%-3rem)] mx-auto bg-white/10" />
+                                    <div className="h-px w-[calc(100%-3rem)] mx-auto bg-[var(--color-surface-hover)]" />
                                     <ul className="py-3">
                                         {suggestionList.map((item, i) => (
                                             <li key={i}>
@@ -244,12 +244,12 @@ export default function HomePage() {
                                                     onClick={() => handleSearch(item)}
                                                     onMouseEnter={() => setSelectedIndex(i)}
                                                     className={`w-full text-left px-6 py-3 flex items-center gap-4 text-[16px] transition-colors focus:outline-none
-                                                        ${selectedIndex === i ? 'bg-white/10 text-white' : 'hover:bg-white/5 text-slate-300'}`}
+                                                        ${selectedIndex === i ? 'bg-[var(--color-surface-hover)] text-[var(--color-text-primary)]' : 'hover:bg-[var(--color-surface)] text-[var(--color-text-secondary)]'}`}
                                                 >
                                                     {localQuery ? (
-                                                        <Search className={`w-4 h-4 ${selectedIndex === i ? 'text-primary-400' : 'text-slate-500'}`} />
+                                                        <Search className={`w-4 h-4 ${selectedIndex === i ? 'text-primary-400' : 'text-[var(--color-text-tertiary)]'}`} />
                                                     ) : (
-                                                        <Clock className="w-4 h-4 text-slate-500" />
+                                                        <Clock className="w-4 h-4 text-[var(--color-text-tertiary)]" />
                                                     )}
                                                     <span className="font-light tracking-wide flex-1">{item}</span>
                                                     {!localQuery && selectedIndex === i && (
@@ -277,7 +277,7 @@ export default function HomePage() {
                             onClick={() => {
                                 if (localQuery.trim()) handleSearch();
                             }}
-                            className="px-8 py-3 bg-white/5 border border-white/10 rounded-xl text-slate-300 font-medium hover:bg-white/10 hover:border-white/20 transition-all flex items-center gap-2"
+                            className="px-8 py-3 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl text-[var(--color-text-secondary)] font-medium hover:bg-[var(--color-surface-hover)] hover:border-[var(--color-border-hover)] transition-all flex items-center gap-2"
                         >
                             <Sparkles className="w-4 h-4 text-primary-400" />
                             Deep Search
@@ -294,14 +294,14 @@ export default function HomePage() {
                 >
                     <div className="flex items-center justify-center gap-2 mb-6">
                         <TrendingUp className="w-4 h-4 text-primary-400" />
-                        <span className="text-sm text-slate-400 font-medium uppercase tracking-widest">Trending Now</span>
+                        <span className="text-sm text-[var(--color-text-secondary)] font-medium uppercase tracking-widest">Trending Now</span>
                     </div>
                     <div className="flex flex-wrap justify-center gap-3">
                         {TRENDING.map((item, i) => (
                             <button
                                 key={i}
                                 onClick={() => handleSearch(item)}
-                                className="px-4 py-2 glass-panel hover:bg-white/10 border border-white/5 rounded-full text-sm text-slate-300 transition-all hover:text-white hover:border-primary-500/30 hover:shadow-[0_0_15px_rgba(99,102,241,0.2)] flex items-center gap-2"
+                                className="px-4 py-2 glass-panel hover:bg-[var(--color-surface-hover)] border border-[var(--color-border)] rounded-full text-sm text-[var(--color-text-secondary)] transition-all hover:text-[var(--color-text-primary)] hover:border-primary-500/30 hover:shadow-[0_0_15px_rgba(99,102,241,0.2)] flex items-center gap-2"
                             >
                                 {item}
                                 <ExternalLink className="w-3 h-3 opacity-50" />
@@ -312,16 +312,16 @@ export default function HomePage() {
             </main>
 
             {/* Minimal Background Footer */}
-            <footer className="mt-auto py-6 border-t border-white/5 relative z-10">
-                <div className="max-w-7xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 font-medium tracking-wide">
+            <footer className="mt-auto py-6 border-t border-[var(--color-border)] relative z-10">
+                <div className="max-w-7xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between text-xs text-[var(--color-text-tertiary)] font-medium tracking-wide">
                     <div className="mb-4 sm:mb-0">
                         <span className="text-primary-400 mr-2">●</span> Seekora Systems 2026
                     </div>
                     <div className="flex items-center gap-8">
-                        <a href="#" className="hover:text-slate-300 transition-colors">Privacy</a>
-                        <a href="#" className="hover:text-slate-300 transition-colors">Terms</a>
-                        <a href="#" className="hover:text-slate-300 transition-colors">Developers</a>
-                        <a href="#" className="hover:text-slate-300 transition-colors">Settings</a>
+                        <a href="#" className="hover:text-[var(--color-text-secondary)] transition-colors">Privacy</a>
+                        <a href="#" className="hover:text-[var(--color-text-secondary)] transition-colors">Terms</a>
+                        <a href="#" className="hover:text-[var(--color-text-secondary)] transition-colors">Developers</a>
+                        <a href="#" className="hover:text-[var(--color-text-secondary)] transition-colors">Settings</a>
                     </div>
                 </div>
             </footer>

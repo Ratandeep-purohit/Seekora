@@ -70,7 +70,7 @@ export function VoiceOverlay({ isOpen, onClose }: VoiceOverlayProps) {
                 >
                     <button
                         onClick={onClose}
-                        className="absolute top-8 right-8 p-3 hover:bg-slate-800 rounded-full transition-colors text-slate-400 hover:text-white"
+                        className="absolute top-8 right-8 p-3 hover:bg-slate-800 rounded-full transition-colors text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
                     >
                         <X className="w-8 h-8" />
                     </button>
@@ -85,7 +85,7 @@ export function VoiceOverlay({ isOpen, onClose }: VoiceOverlayProps) {
                             className="absolute inset-[-40px] bg-indigo-500 rounded-full blur-3xl opacity-20"
                         />
                         <div className="w-32 h-32 rounded-full bg-indigo-600 flex items-center justify-center shadow-2xl shadow-indigo-500/40 relative z-10">
-                            <Mic className={cn("w-12 h-12 text-white", isListening && "animate-pulse")} />
+                            <Mic className={cn("w-12 h-12 text-[var(--color-text-primary)]", isListening && "animate-pulse")} />
                         </div>
                     </div>
 
@@ -93,7 +93,7 @@ export function VoiceOverlay({ isOpen, onClose }: VoiceOverlayProps) {
                         key={transcript}
                         initial={{ y: 20, opacity: 0 }}
                         animate={{ y: 0, opacity: 1 }}
-                        className="text-4xl font-bold text-white text-center mb-4 min-h-[1.2em]"
+                        className="text-4xl font-bold text-[var(--color-text-primary)] text-center mb-4 min-h-[1.2em]"
                     >
                         {transcript || (isListening ? "Listening..." : "Ready")}
                     </motion.h2>
@@ -101,7 +101,7 @@ export function VoiceOverlay({ isOpen, onClose }: VoiceOverlayProps) {
                     <motion.p
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
-                        className="text-slate-400 text-lg font-medium text-center max-w-md"
+                        className="text-[var(--color-text-secondary)] text-lg font-medium text-center max-w-md"
                     >
                         {isListening ? "Speak clearly into your microphone" : "Processings..."}
                     </motion.p>

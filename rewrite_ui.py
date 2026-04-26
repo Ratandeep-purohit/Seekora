@@ -1,51 +1,34 @@
-
-
-files = [
-    'client/src/features/search/pages/HomePage.tsx',
-    'client/src/features/search/pages/ResultsPage.tsx'
-]
+import os
+import glob
 
 replacements = {
-    'text-indigo-': 'text-primary-',
-    'bg-indigo-': 'bg-primary-',
-    'border-indigo-': 'border-primary-',
-    'shadow-indigo-': 'shadow-primary-',
-    
-    'text-purple-': 'text-primary-',
-    'bg-purple-': 'bg-primary-',
-    'border-purple-': 'border-primary-',
-    'shadow-purple-': 'shadow-primary-',
-
-    'text-amber-': 'text-primary-',
-    'from-indigo-500': 'from-primary-500',
-    'to-purple-500': 'to-primary-600',
+    "text-white": "text-[var(--color-text-primary)]",
+    "text-slate-200": "text-[var(--color-text-primary)]",
+    "text-slate-300": "text-[var(--color-text-secondary)]",
+    "text-slate-400": "text-[var(--color-text-secondary)]",
+    "text-slate-500": "text-[var(--color-text-tertiary)]",
+    "bg-white/5": "bg-[var(--color-surface)]",
+    "bg-white/10": "bg-[var(--color-surface-hover)]",
+    "bg-white/15": "bg-[var(--color-surface-hover)]",
+    "border-white/5": "border-[var(--color-border)]",
+    "border-white/10": "border-[var(--color-border)]",
+    "border-white/20": "border-[var(--color-border-hover)]",
+    "text-white/80": "text-[var(--color-text-primary)]/80",
+    "hover:text-white": "hover:text-[var(--color-text-primary)]",
+    "hover:bg-white/5": "hover:bg-[var(--color-surface)]",
+    "hover:bg-white/10": "hover:bg-[var(--color-surface-hover)]",
+    "hover:border-white/10": "hover:border-[var(--color-border)]",
 }
 
-for file in files:
-    with open(file, 'r', encoding='utf-8') as f:
+for filepath in glob.glob("client/src/**/*.tsx", recursive=True):
+    with open(filepath, 'r', encoding='utf-8') as f:
         content = f.read()
-
-    # Add import
-    if 'ThemeSwitcher' not in content:
-        content = content.replace(
-            "import { useSearchStore } from '../stores/searchStore';",
-            "import { useSearchStore } from '../stores/searchStore';\nimport ThemeSwitcher from '../components/ThemeSwitcher';"
-        )
-    
-    # Insert ThemeSwitcher in UI
-    if 'Workspace</a>' in content and 'ThemeSwitcher />' not in content:
-        content = content.replace(
-            '<a href="#" className="text-slate-400 hover:text-white transition-colors">Workspace</a>',
-            '<ThemeSwitcher />\n                    <a href="#" className="text-slate-400 hover:text-white transition-colors">Workspace</a>'
-        )
-    elif '<button className="w-9 h-9 rounded-full' in content and 'ThemeSwitcher />' not in content:
-        content = content.replace(
-            '<button className="w-9 h-9 rounded-full',
-            '<ThemeSwitcher />\n                        <button className="w-9 h-9 rounded-full'
-        )
-
+        
+    original = content
     for old, new in replacements.items():
         content = content.replace(old, new)
         
-    with open(file, 'w', encoding='utf-8') as f:
-        f.write(content)
+    if content != original:
+        with open(filepath, 'w', encoding='utf-8') as f:
+            f.write(content)
+        print(f"Updated {filepath}")
